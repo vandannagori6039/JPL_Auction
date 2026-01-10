@@ -38,14 +38,14 @@ export const createInitialTeams = async (req, res) => {
     
     // Create 8 teams with initial data
     const initialTeams = [
-      { teamName: 'Team 1', teamNumber: 1, color: '#EF4444', captain: '' },
-      { teamName: 'Team 2', teamNumber: 2, color: '#3B82F6', captain: '' },
-      { teamName: 'Team 3', teamNumber: 3, color: '#10B981', captain: '' },
-      { teamName: 'Team 4', teamNumber: 4, color: '#F59E0B', captain: '' },
-      { teamName: 'Team 5', teamNumber: 5, color: '#8B5CF6', captain: '' },
-      { teamName: 'Team 6', teamNumber: 6, color: '#EC4899', captain: '' },
-      { teamName: 'Team 7', teamNumber: 7, color: '#14B8A6', captain: '' },
-      { teamName: 'Team 8', teamNumber: 8, color: '#F97316', captain: '' }
+      { teamName: 'Mahaveer Indians', teamNumber: 1, color: '#EF4444', captain: '', logo: '/images/teamLogos/MahveerIndians.png' },
+      { teamName: 'Mahaveer Kings', teamNumber: 2, color: '#3B82F6', captain: '', logo: '/images/teamLogos/MahaveerKings.png' },
+      { teamName: 'Mahaveer Giants', teamNumber: 3, color: '#10B981', captain: '', logo: '/images/teamLogos/MahveerGiants.png' },
+      { teamName: 'Mahaveer Champians', teamNumber: 4, color: '#F59E0B', captain: '', logo: '/images/teamLogos/MahveerChampions.png' },
+      { teamName: 'Mahaveer Royals', teamNumber: 5, color: '#8B5CF6', captain: '', logo: '/images/teamLogos/MahveerRoyals.png' },
+      { teamName: 'Mahaveer Capitals', teamNumber: 6, color: '#EC4899', captain: '', logo: '/images/teamLogos/MahveerCapitals.png' },
+      { teamName: 'Mahaveer Titans', teamNumber: 7, color: '#14B8A6', captain: '', logo: '/images/teamLogos/MahaveerTitans.png' },
+      { teamName: 'Mahaveer Challengers', teamNumber: 8, color: '#F97316', captain: '', logo: '/images/teamLogos/MahveerChallengers.png' }
     ];
     
     await Team.insertMany(initialTeams);
@@ -72,7 +72,7 @@ export const getAllTeams = async (req, res) => {
       const budgetUtilization = (totalSpent / team.initialPurse) * 100;
       
       // Calculate category breakdown
-      const categoryBreakdown = { A: 0, B: 0, C: 0, D: 0 };
+      const categoryBreakdown = { A: 0, B: 0, C: 0 };
       team.players.forEach(p => {
         if (categoryBreakdown[p.category] !== undefined) {
           categoryBreakdown[p.category]++;

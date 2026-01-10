@@ -116,15 +116,29 @@
                     <%= player.status === 'sold' ? 'disabled' : '' %>
                 >
                     <option value="">Select Category</option>
-                    <option value="A" <%= player.category === 'A' ? 'selected' : '' %>>Category A - ₹10,000 (Best Players)</option>
-                    <option value="B" <%= player.category === 'B' ? 'selected' : '' %>>Category B - ₹5,000 (Mid-Tier)</option>
+                    <option value="A" <%= player.category === 'A' ? 'selected' : '' %>>Category A - ₹5,000 (Best Players)</option>
+                    <option value="B" <%= player.category === 'B' ? 'selected' : '' %>>Category B - ₹3,000 (Mid-Tier)</option>
                     <option value="C" <%= player.category === 'C' ? 'selected' : '' %>>Category C - ₹2,000</option>
-                    <option value="D" <%= player.category === 'D' ? 'selected' : '' %>>Category D - ₹1,000</option>
                 </select>
                 <% if (player.status === 'sold') { %>
                     <input type="hidden" name="category" value="<%= player.category %>">
                     <small class="form-text warning">Category is locked for sold players</small>
                 <% } %>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="imageUrl">Player Image URL</label>
+                <input 
+                    type="url" 
+                    id="imageUrl" 
+                    name="imageUrl" 
+                    class="form-control"
+                    value="<%= player.imageUrl || '' %>"
+                    placeholder="https://example.com/player-image.jpg"
+                >
+                <small class="form-text">Optional: Enter direct URL to player's image</small>
             </div>
         </div>
 

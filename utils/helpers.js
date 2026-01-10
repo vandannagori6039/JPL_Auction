@@ -1,13 +1,12 @@
 import Team from '../models/Team.js';
 
 const CATEGORY_CONFIG = {
-	A: { basePrice: 10000, minIncrement: 1000 },
-	B: { basePrice: 5000, minIncrement: 500 },
+	A: { basePrice: 5000, minIncrement: 500 },
+	B: { basePrice: 3000, minIncrement: 300 },
 	C: { basePrice: 2000, minIncrement: 200 },
-	D: { basePrice: 1000, minIncrement: 100 },
 };
 
-const MIN_BASE_PRICE = 1000;
+const MIN_BASE_PRICE = 2000;
 
 export const calculateMaxBid = async (teamId) => {
 	const team = await Team.findById(teamId).lean();
@@ -87,8 +86,8 @@ export const validatePlayerData = (playerData = {}) => {
 		errors.push('Phone number must be 10 digits');
 	}
 	if (!category) errors.push('Category is required');
-	if (category && !['A', 'B', 'C', 'D'].includes(category)) {
-		errors.push('Category must be A, B, C, or D');
+	if (category && !['A', 'B', 'C'].includes(category)) {
+		errors.push('Category must be A, B, or C');
 	}
 	if (!playerType) errors.push('Player type is required');
 	if (playerType && !VALID_PLAYER_TYPES.includes(playerType)) {

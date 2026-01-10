@@ -72,6 +72,9 @@
                 <div class="players-list" id="playersList">
                     <% unsoldPlayers.forEach(player => { %>
                         <div class="player-list-item" data-category="<%= player.category %>" data-player-id="<%= player._id %>" onclick="selectPlayer('<%= player._id %>')">
+                            <% if (player.imageUrl) { %>
+                                <img src="<%= player.imageUrl %>" alt="<%= player.name %>" style="width: 35px; height: 35px; object-fit: cover; border-radius: 50%; margin-right: 8px;" onerror="this.style.display='none'">
+                            <% } %>
                             <div class="player-info">
                                 <span class="player-number">#<%= player.playerNumber %></span>
                                 <span class="player-name-text"><%= player.name %></span>
@@ -110,6 +113,15 @@
             <div class="current-player-panel" id="currentPlayerPanel">
                 <% if (currentPlayer) { %>
                     <div class="player-showcase">
+                        <div class="player-image-showcase">
+                            <% if (currentPlayer.imageUrl) { %>
+                                <img src="<%= currentPlayer.imageUrl %>" alt="<%= currentPlayer.name %>" style="width: 180px; height: 180px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" onerror="this.src='/images/placeholder-player.png'">
+                            <% } else { %>
+                                <div style="width: 180px; height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                                    <%= currentPlayer.name.charAt(0).toUpperCase() %>
+                                </div>
+                            <% } %>
+                        </div>
                         <div class="player-details">
                             <h1 class="player-name"><%= currentPlayer.name %></h1>
                             <div class="player-meta">
@@ -131,6 +143,9 @@
                             </div>
                             <div class="bidding-team" id="biddingTeam">
                                 <% if (auctionState.currentBidder) { %>
+                                    <% if (auctionState.currentBidder.logo) { %>
+                                        <img src="<%= auctionState.currentBidder.logo %>" alt="<%= auctionState.currentBidder.teamName %>" style="width: 30px; height: 30px; object-fit: contain; margin-right: 8px; vertical-align: middle;">
+                                    <% } %>
                                     <%= auctionState.currentBidder.teamName %>
                                 <% } else { %>
                                     No bids yet
@@ -151,6 +166,9 @@
                 <% teams.forEach(team => { %>
                     <div class="team-bid-card" data-team-id="<%= team._id %>" style="border-left: 4px solid <%= team.color %>">
                         <div class="team-header">
+                            <% if (team.logo) { %>
+                                <img src="<%= team.logo %>" alt="<%= team.teamName %>" class="team-logo-auction" style="width: 40px; height: 40px; object-fit: contain; margin-right: 8px;">
+                            <% } %>
                             <h3 style="color: <%= team.color %>"><%= team.teamName %></h3>
                         </div>
                         
@@ -258,8 +276,16 @@
                     <% if (recentSales && recentSales.length > 0) { %>
                         <% recentSales.forEach(sale => { %>
                             <div class="sale-entry">
-                                <div class="sale-player"><%= sale.name %></div>
+                                <div class="sale-player">
+                                    <% if (sale.imageUrl) { %>
+                                        <img src="<%= sale.imageUrl %>" alt="<%= sale.name %>" style="width: 25px; height: 25px; object-fit: cover; border-radius: 50%; margin-right: 6px; vertical-align: middle;" onerror="this.style.display='none'">
+                                    <% } %>
+                                    <%= sale.name %>
+                                </div>
                                 <div class="sale-team" style="color: <%= sale.soldTo ? sale.soldTo.color : '#666' %>">
+                                    <% if (sale.soldTo && sale.soldTo.logo) { %>
+                                        <img src="<%= sale.soldTo.logo %>" alt="<%= sale.soldTo.teamName %>" style="width: 20px; height: 20px; object-fit: contain; margin-right: 6px; vertical-align: middle;">
+                                    <% } %>
                                     <%= sale.soldTo ? sale.soldTo.teamName : 'Unknown' %>
                                 </div>
                                 <div class="sale-price">₹<%= sale.soldPrice.toLocaleString('en-IN') %></div>

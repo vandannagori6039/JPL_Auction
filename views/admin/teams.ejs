@@ -36,6 +36,9 @@
             <% teams.forEach(team => { %>
                 <div class="team-card" style="border-left: 5px solid <%= team.color %>">
                     <div class="team-header">
+                        <% if (team.logo) { %>
+                            <img src="<%= team.logo %>" alt="<%= team.teamName %>" class="team-logo" style="width: 50px; height: 50px; object-fit: contain; margin-right: 10px;">
+                        <% } %>
                         <h2 style="color: <%= team.color %>">
                             <%= team.teamName %>
                             <button 

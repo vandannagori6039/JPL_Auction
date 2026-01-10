@@ -1,4 +1,6 @@
-/* ============= PUBLIC DISPLAY STYLES ============= */
+/* ============= BEAUTIFUL AUCTION DISPLAY STYLES ============= */
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap");
 
 * {
     margin: 0;
@@ -7,11 +9,79 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: "Poppins", sans-serif;
+    background: #0a0e27;
     color: #fff;
     overflow: hidden;
     min-height: 100vh;
+    position: relative;
+}
+
+/* ============= ANIMATED BACKGROUND ============= */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+            circle at 20% 50%,
+            rgba(120, 119, 198, 0.3),
+            transparent 50%
+        ),
+        radial-gradient(
+            circle at 80% 80%,
+            rgba(139, 92, 246, 0.3),
+            transparent 50%
+        ),
+        radial-gradient(
+            circle at 40% 90%,
+            rgba(236, 72, 153, 0.2),
+            transparent 50%
+        ),
+        linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+    z-index: -2;
+    animation: bgShift 20s ease infinite;
+}
+
+@keyframes bgShift {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Particle Effect */
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(2px 2px at 20% 30%, white, transparent),
+        radial-gradient(2px 2px at 60% 70%, white, transparent),
+        radial-gradient(1px 1px at 50% 50%, white, transparent),
+        radial-gradient(1px 1px at 80% 10%, white, transparent),
+        radial-gradient(2px 2px at 90% 60%, white, transparent);
+    background-size: 200% 200%;
+    background-position: 0% 0%;
+    opacity: 0.4;
+    z-index: -1;
+    animation: particles 40s linear infinite;
+}
+
+@keyframes particles {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 100% 100%;
+    }
 }
 
 .display-container {
@@ -20,12 +90,45 @@ body {
     flex-direction: column;
 }
 
-/* ============= HEADER ============= */
-
+/* ============= GLASSMORPHIC HEADER ============= */
 .display-header {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.05);
     padding: 1.5rem 2rem;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 100;
+}
+
+.display-header::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #667eea 20%,
+        #764ba2 50%,
+        #667eea 80%,
+        transparent
+    );
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%,
+    100% {
+        opacity: 0.5;
+        transform: translateX(-100%);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(100%);
+    }
 }
 
 .header-content {
@@ -36,43 +139,135 @@ body {
     margin: 0 auto;
 }
 
+.tournament-branding {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    animation: slideInLeft 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.tournament-logo {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
+    animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
 .tournament-title {
     font-size: 3rem;
-    font-weight: bold;
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
-    letter-spacing: 2px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff 0%, #667eea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 3px;
+    animation: titleGlow 2s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+    0%,
+    100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.2);
+    }
 }
 
 .header-stats {
     display: flex;
-    gap: 3rem;
-    font-size: 1.5rem;
+    gap: 2rem;
+    font-size: 1.3rem;
     align-items: center;
+    animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.header-stat {
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.header-stat:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .header-stat strong {
     color: #fbbf24;
-    font-size: 2rem;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
 }
 
 .connection-status {
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 20px;
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    }
 }
 
 .connection-status.disconnected {
-    animation: pulse-red 1s infinite;
+    animation: disconnectPulse 1s ease-in-out infinite;
 }
 
-@keyframes pulse-red {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+@keyframes disconnectPulse {
+    0%,
+    100% {
+        background: rgba(239, 68, 68, 0.2);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    50% {
+        background: rgba(239, 68, 68, 0.4);
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
 }
 
 /* ============= MAIN DISPLAY AREA ============= */
-
 .display-main {
     flex: 1;
     padding: 2rem;
@@ -82,144 +277,408 @@ body {
     overflow-y: auto;
 }
 
-/* ============= CURRENT PLAYER SECTION ============= */
-
+/* ============= PLAYER SECTION ============= */
 .current-player-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 30px;
     padding: 3rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     min-height: 300px;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.current-player-section::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle,
+        rgba(102, 126, 234, 0.1) 0%,
+        transparent 70%
+    );
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .player-display {
     width: 100%;
     display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.player-display:not(:has(.player-image-container)) {
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
+}
+
+.player-image-container {
+    display: flex;
     align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.player-image-container::before {
+    content: "";
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 25px;
+    filter: blur(20px);
+    opacity: 0.5;
+    animation: imagePulse 3s ease-in-out infinite;
+}
+
+@keyframes imagePulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+}
+
+.player-image {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.5s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.player-image:hover {
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 .player-display-left {
     text-align: left;
+    animation: slideInLeft 0.6s ease-out 0.2s both;
 }
 
-.player-display-number {
-    font-size: 3rem;
-    font-weight: bold;
-    color: #9ca3af;
+.player-display-info {
     margin-bottom: 1rem;
 }
 
-.player-display-name {
-    font-size: 4rem;
-    font-weight: bold;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
-    line-height: 1.2;
+.player-type-badge {
+    display: inline-block;
+    padding: 0.6rem 1.8rem;
+    background: rgba(102, 126, 234, 0.2);
+    color: #a5b4fc;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
 }
 
-.player-display-category {
-    margin-bottom: 1.5rem;
+.player-display-number {
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    animation: numberSlide 0.5s ease-out;
+}
+
+@keyframes numberSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.player-display-name {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: nameReveal 0.8s ease-out 0.1s both;
+}
+
+@keyframes nameReveal {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes categorySlide {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .category-badge {
     display: inline-block;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    font-size: 1.5rem;
-    font-weight: bold;
+    padding: 1rem 2.5rem;
+    border-radius: 15px;
+    font-size: 1.4rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-badge::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.category-badge:hover::before {
+    left: 100%;
 }
 
 .cat-A {
     background: linear-gradient(135deg, #fbbf24, #f59e0b);
     color: #1f2937;
+    box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);
 }
 
 .cat-B {
     background: linear-gradient(135deg, #94a3b8, #64748b);
     color: white;
+    box-shadow: 0 8px 25px rgba(100, 116, 139, 0.4);
 }
 
 .cat-C {
     background: linear-gradient(135deg, #fb923c, #ea580c);
     color: white;
+    box-shadow: 0 8px 25px rgba(251, 146, 60, 0.4);
 }
 
 .cat-D {
     background: linear-gradient(135deg, #60a5fa, #3b82f6);
     color: white;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
 }
 
 .player-display-base {
-    font-size: 1.8rem;
-    color: #6b7280;
+    font-size: 1.6rem;
+    color: #cbd5e1;
+    font-weight: 500;
+    animation: baseSlide 0.6s ease-out 0.4s both;
+}
+
+@keyframes baseSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .player-display-right {
     display: flex;
     align-items: center;
     justify-content: center;
+    animation: slideInRight 0.6s ease-out 0.3s both;
 }
 
+/* ============= BID SECTION ============= */
 .current-bid-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 3rem;
-    border-radius: 20px;
+    padding: 2rem;
+    border-radius: 25px;
     text-align: center;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    min-width: 400px;
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5),
+        0 0 60px rgba(118, 75, 162, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    min-width: 420px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.current-bid-section::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 70%
+    );
+    animation: bidRotate 10s linear infinite;
+}
+
+@keyframes bidRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .bid-header {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     text-transform: uppercase;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     opacity: 0.9;
     margin-bottom: 1rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
 }
 
 .bid-display-amount {
-    font-size: 5rem;
-    font-weight: bold;
+    font-size: 2.5rem;
+    font-weight: 900;
     margin: 1.5rem 0;
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-    font-family: 'Arial Black', sans-serif;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.3);
+    font-family: "Poppins", sans-serif;
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    animation: amountGlow 2s ease-in-out infinite;
+}
+
+@keyframes amountGlow {
+    0%,
+    100% {
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.5),
+            0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        text-shadow: 0 0 40px rgba(255, 255, 255, 0.8),
+            0 4px 10px rgba(0, 0, 0, 0.3);
+    }
 }
 
 .bid-display-team {
     font-size: 2rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-top: 1rem;
     text-transform: uppercase;
     letter-spacing: 2px;
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* ============= NO AUCTION STATE ============= */
 .no-auction {
     width: 100%;
     text-align: center;
+    animation: fadeInScale 0.6s ease-out;
+}
+
+.no-auction-content::before {
+    content: "⏳";
+    font-size: 6rem;
+    display: block;
+    margin-bottom: 1rem;
+    animation: hourglass 2s ease-in-out infinite;
+}
+
+@keyframes hourglass {
+    0%,
+    100% {
+        transform: rotate(0deg);
+        opacity: 0.6;
+    }
+    50% {
+        transform: rotate(180deg);
+        opacity: 1;
+    }
 }
 
 .no-auction-content h2 {
     font-size: 3rem;
-    color: #9ca3af;
+    color: #cbd5e1;
     margin-bottom: 1rem;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .no-auction-content p {
     font-size: 1.5rem;
-    color: #6b7280;
+    color: #94a3b8;
 }
 
-/* ============= TEAMS DISPLAY GRID ============= */
-
+/* ============= TEAMS GRID ============= */
 .teams-display-section {
     flex: 1;
 }
@@ -228,154 +687,187 @@ body {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
+    animation: gridFadeIn 0.8s ease-out 0.4s both;
+}
+
+@keyframes gridFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .team-display-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.team-display-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.team-display-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.team-display-card:hover::before {
+    opacity: 1;
 }
 
 .team-display-card.bidding-highlight {
-    transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    transform: scale(1.08) translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
+        0 0 0 3px rgba(251, 191, 36, 0.5), 0 0 40px rgba(251, 191, 36, 0.4);
     z-index: 10;
+    animation: cardPulse 0.6s ease-out, glowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cardPulse {
+    0% {
+        transform: scale(1) translateY(0);
+    }
+    50% {
+        transform: scale(1.12) translateY(-12px);
+    }
+    100% {
+        transform: scale(1.08) translateY(-10px);
+    }
+}
+
+@keyframes glowPulse {
+    0%,
+    100% {
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
+            0 0 0 3px rgba(251, 191, 36, 0.5), 0 0 40px rgba(251, 191, 36, 0.4);
+    }
+    50% {
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
+            0 0 0 3px rgba(251, 191, 36, 0.8), 0 0 60px rgba(251, 191, 36, 0.6);
+    }
 }
 
 .team-display-header {
-    padding: 1rem;
+    padding: 1.2rem;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .team-display-header h3 {
     color: white;
-    font-size: 1.3rem;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
     margin: 0;
+    letter-spacing: 1px;
+}
+
+.team-logo-display {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    margin-right: 10px;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
 }
 
 .team-display-body {
     padding: 1rem;
-    color: #1f2937;
+    color: #fff;
 }
 
 .team-display-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
-}
-
-.team-display-row .label {
-    color: #6b7280;
-    font-size: 0.9rem;
-}
-
-.team-display-row .value {
-    font-weight: bold;
-    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .team-display-progress {
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .progress-bar-display {
-    height: 8px;
-    background: #e5e7eb;
-    border-radius: 4px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .progress-fill-display {
     height: 100%;
-    border-radius: 4px;
-    transition: width 0.5s ease;
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px currentColor;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill-display::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: progressShine 2s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 .purse-value {
-    color: #059669;
+    color: #34d399;
+    text-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
 }
 
 .spent-value {
-    color: #dc2626;
+    color: #f87171;
+    text-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
 }
 
-/* ============= SOLD OVERLAY ============= */
-
-.sold-overlay-display {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.95);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
-
-.sold-overlay-display.show-overlay {
-    opacity: 1;
-}
-
-.sold-content-display {
-    text-align: center;
-    animation: scaleIn 0.5s ease-out;
-}
-
-.sold-text {
-    font-size: 8rem;
-    font-weight: bold;
-    color: #10b981;
-    text-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
-    margin-bottom: 2rem;
-    animation: pulse-green 1s infinite;
-}
-
-@keyframes pulse-green {
-    0%, 100% { 
-        transform: scale(1);
-        text-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
-    }
-    50% { 
-        transform: scale(1.05);
-        text-shadow: 0 0 60px rgba(16, 185, 129, 0.8);
-    }
-}
-
-.sold-details-display {
-    font-size: 2rem;
-}
-
-.sold-player-name {
-    font-size: 4rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-    color: white;
-}
-
-.sold-team-name {
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
-    font-weight: 600;
-}
-
-.sold-price-display {
-    font-size: 5rem;
-    font-weight: bold;
-    color: #fbbf24;
-    text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
-}
-
-/* ============= UNSOLD OVERLAY ============= */
-
+/* ============= OVERLAYS ============= */
+.sold-overlay-display,
 .unsold-overlay-display {
     position: fixed;
     top: 0;
@@ -383,6 +875,7 @@ body {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -391,30 +884,158 @@ body {
     transition: opacity 0.5s ease;
 }
 
+.sold-overlay-display.show-overlay,
 .unsold-overlay-display.show-overlay {
     opacity: 1;
 }
 
+.sold-overlay-display::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(16, 185, 129, 0.2) 0%,
+        transparent 70%
+    );
+    animation: overlayPulse 2s ease-in-out infinite;
+}
+
+.unsold-overlay-display::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(239, 68, 68, 0.2) 0%,
+        transparent 70%
+    );
+    animation: overlayPulse 2s ease-in-out infinite;
+}
+
+@keyframes overlayPulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+.sold-content-display,
 .unsold-content-display {
     text-align: center;
     animation: scaleIn 0.5s ease-out;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.sold-text {
+    font-size: 8rem;
+    font-weight: 900;
+    color: #10b981;
+    text-shadow: 0 0 40px rgba(16, 185, 129, 0.8),
+        0 0 80px rgba(16, 185, 129, 0.4);
+    margin-bottom: 2rem;
+    animation: soldPulse 1s ease-in-out infinite;
+}
+
+@keyframes soldPulse {
+    0%,
+    100% {
+        transform: scale(1);
+        text-shadow: 0 0 40px rgba(16, 185, 129, 0.8),
+            0 0 80px rgba(16, 185, 129, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        text-shadow: 0 0 60px rgba(16, 185, 129, 1),
+            0 0 120px rgba(16, 185, 129, 0.6);
+    }
+}
+
+.sold-player-name {
+    font-size: 4rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: white;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.sold-team-name {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+}
+
+.sold-price-display {
+    font-size: 5rem;
+    font-weight: 900;
+    color: #fbbf24;
+    text-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 4px 20px rgba(0, 0, 0, 0.5);
+    animation: priceGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes priceGlow {
+    0%,
+    100% {
+        text-shadow: 0 0 30px rgba(251, 191, 36, 0.8),
+            0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    50% {
+        text-shadow: 0 0 50px rgba(251, 191, 36, 1),
+            0 4px 20px rgba(0, 0, 0, 0.5);
+    }
 }
 
 .unsold-text {
     font-size: 8rem;
-    font-weight: bold;
+    font-weight: 900;
     color: #ef4444;
-    text-shadow: 0 0 40px rgba(239, 68, 68, 0.6);
+    text-shadow: 0 0 40px rgba(239, 68, 68, 0.8),
+        0 0 80px rgba(239, 68, 68, 0.4);
     margin-bottom: 2rem;
+    animation: unsoldShake 0.5s ease-in-out infinite;
+}
+
+@keyframes unsoldShake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
 }
 
 .unsold-player-name {
     font-size: 3rem;
     color: #9ca3af;
+    font-weight: 600;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* ============= ANIMATIONS ============= */
-
 .fade-in {
     animation: fadeIn 0.5s ease-out;
 }
@@ -430,19 +1051,8 @@ body {
     }
 }
 
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
 .pulse-animation {
-    animation: bidPulse 0.3s ease-out;
+    animation: bidPulse 0.5s ease-out;
 }
 
 @keyframes bidPulse {
@@ -450,8 +1060,9 @@ body {
         transform: scale(1);
     }
     50% {
-        transform: scale(1.1);
+        transform: scale(1.15);
         color: #fbbf24;
+        text-shadow: 0 0 30px rgba(251, 191, 36, 0.8);
     }
     100% {
         transform: scale(1);
@@ -459,21 +1070,17 @@ body {
 }
 
 /* ============= RESPONSIVE DESIGN ============= */
-
 @media (max-width: 1400px) {
     .teams-display-grid {
         grid-template-columns: repeat(4, 1fr);
         gap: 1rem;
     }
-    
     .player-display-name {
         font-size: 3rem;
     }
-    
     .bid-display-amount {
         font-size: 4rem;
     }
-    
     .current-bid-section {
         min-width: 300px;
         padding: 2rem;
@@ -484,12 +1091,10 @@ body {
     .teams-display-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
     .player-display {
         grid-template-columns: 1fr;
         text-align: center;
     }
-    
     .player-display-left {
         text-align: center;
     }
@@ -499,97 +1104,86 @@ body {
     .display-header {
         padding: 1rem;
     }
-    
     .tournament-title {
         font-size: 1.8rem;
     }
-    
     .header-stats {
         gap: 1rem;
         font-size: 1rem;
     }
-    
     .header-stat strong {
         font-size: 1.2rem;
     }
-    
     .display-main {
         padding: 1rem;
     }
-    
     .current-player-section {
         padding: 1.5rem;
         min-height: 200px;
     }
-    
     .player-display-number {
         font-size: 2rem;
     }
-    
     .player-display-name {
         font-size: 2rem;
     }
-    
     .category-badge {
         font-size: 1rem;
         padding: 0.5rem 1rem;
     }
-    
     .player-display-base {
         font-size: 1.2rem;
     }
-    
     .bid-display-amount {
         font-size: 2.5rem;
     }
-    
     .bid-display-team {
         font-size: 1.2rem;
     }
-    
     .teams-display-grid {
         grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
     }
-    
     .team-display-header h3 {
         font-size: 1rem;
     }
-    
     .team-display-body {
         padding: 0.75rem;
     }
-    
     .team-display-row .value {
         font-size: 0.9rem;
     }
-    
-    .sold-text, .unsold-text {
+    .sold-text,
+    .unsold-text {
         font-size: 4rem;
     }
-    
     .sold-player-name {
         font-size: 2rem;
     }
-    
     .sold-team-name {
         font-size: 1.5rem;
     }
-    
     .sold-price-display {
         font-size: 3rem;
     }
 }
 
-/* ============= FULL SCREEN MODE ============= */
-
-:fullscreen .display-container,
-:-webkit-full-screen .display-container {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* ============= SCROLLBAR ============= */
+.display-main::-webkit-scrollbar {
+    width: 8px;
 }
 
-/* Hide scrollbar but keep functionality */
-.display-main::-webkit-scrollbar {
-    width: 0;
-    background: transparent;
+.display-main::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.display-main::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.display-main::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.8);
 }

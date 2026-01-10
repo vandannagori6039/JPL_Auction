@@ -25,6 +25,7 @@ const teamSchema = new Schema(
 		},
 		captain: { type: String, default: '' },
 		color: { type: String, required: true },
+		logo: { type: String, default: '' },
 		remainingPurse: { type: Number, required: true, default: 100000 },
 		initialPurse: { type: Number, required: true, default: 100000 },
 		playersCount: { type: Number, default: 0 },

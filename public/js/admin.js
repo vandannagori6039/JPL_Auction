@@ -1326,7 +1326,7 @@ function displayShortcutsModal() {
                 </div>
                 <div class="shortcut-item">
                     <kbd>1-8</kbd>
-                    <span>Bid for Team 1-8</span>
+                    <span>Bid for Teams</span>
                 </div>
                 <div class="shortcut-item">
                     <kbd>Space</kbd>

@@ -34,6 +34,7 @@
                         <th style="width: 100px;">Jersey Number</th>
                         <th style="width: 150px;">Player Type *</th>
                         <th style="width: 100px;">Category *</th>
+                        <th style="width: 200px;">Image URL</th>
                         <th style="width: 60px;">Action</th>
                     </tr>
                 </thead>
@@ -140,8 +141,15 @@ function createRow(num) {
                 <option value="A">A</option>
                 <option value="B">B</option>
                 <option value="C">C</option>
-                <option value="D">D</option>
             </select>
+        </td>
+        <td>
+            <input 
+                type="url" 
+                name="players[${num-1}][imageUrl]" 
+                class="form-control form-control-sm"
+                placeholder="https://..."
+            >
         </td>
         <td>
             <button type="button" class="btn btn-sm btn-danger" onclick="deleteRow(this)">
@@ -190,13 +198,15 @@ document.getElementById('bulkAddForm').addEventListener('submit', async (e) => {
         // Only add if required fields are provided
         if (name && phone && jerseySize && playerType && category) {
             const jerseyNumber = formData.get(`players[${index}][jerseyNumber]`);
+            const imageUrl = formData.get(`players[${index}][imageUrl]`);
             players.push({
                 name: name.trim(),
                 phoneNumber: phone.trim(),
                 jerseySize: jerseySize,
                 jerseyNumber: jerseyNumber ? parseInt(jerseyNumber) : undefined,
                 playerType: playerType,
-                category: category
+                category: category,
+                imageUrl: imageUrl ? imageUrl.trim() : undefined
             });
         }
     });

@@ -110,7 +110,12 @@
         <div class="teams-report-grid">
             <% teams.forEach(team => { %>
                 <div class="team-report-card" style="border-left: 5px solid <%= team.color %>">
-                    <h3 style="color: <%= team.color %>"><%= team.teamName %></h3>
+                    <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                        <% if (team.logo) { %>
+                            <img src="<%= team.logo %>" alt="<%= team.teamName %>" class="team-logo-report" style="width: 45px; height: 45px; object-fit: contain; margin-right: 10px;">
+                        <% } %>
+                        <h3 style="color: <%= team.color %>; margin: 0;"><%= team.teamName %></h3>
+                    </div>
                     <div class="team-report-stats">
                         <p><strong>Players:</strong> <%= team.playersCount %>/11</p>
                         <p><strong>Spent:</strong> ₹<%= (100000 - team.remainingPurse).toLocaleString('en-IN') %></p>

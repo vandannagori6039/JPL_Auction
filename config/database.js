@@ -1,7 +1,12 @@
 import mongoose from 'mongoose';
 
 const connectDB = async () => {
-	const uri = process.env.MONGODB_URI;
+	let uri;
+	if(process.env.NODE_ENV !== 'production') {
+		uri = 'mongodb://localhost:27017/jpl-auction';
+	}else{
+		uri = process.env.MONGODB_URI;
+	}
 
 	if (!uri) {
 		console.error('MONGODB_URI is not defined');

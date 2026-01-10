@@ -3,10 +3,9 @@ import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
 const CATEGORY_BASE_PRICE = {
-	A: 10000,
-	B: 5000,
+	A: 5000,
+	B: 3000,
 	C: 2000,
-	D: 1000,
 };
 
 const PLAYER_TYPES = [
@@ -43,7 +42,12 @@ const playerSchema = new Schema({
 	category: {
 		type: String,
 		required: true,
-		enum: ['A', 'B', 'C', 'D'],
+		enum: ['A', 'B', 'C'],
+	},
+	imageUrl: {
+		type: String,
+		trim: true,
+		default: null,
 	},
 	basePrice: { type: Number },
 	currentPrice: { type: Number },

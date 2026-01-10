@@ -4,6 +4,9 @@
     <!-- Team Header -->
     <div class="team-details-header" style="border-left: 5px solid <%= team.color %>">
         <div class="header-content">
+            <% if (team.logo) { %>
+                <img src="<%= team.logo %>" alt="<%= team.teamName %>" class="team-logo-details" style="width: 60px; height: 60px; object-fit: contain; margin-right: 15px;">
+            <% } %>
             <h1 style="color: <%= team.color %>"><%= team.teamName %></h1>
             <span class="team-badge" style="background: <%= team.color %>">
                 Team #<%= team.teamNumber %>
@@ -54,11 +57,6 @@
                 <h3>Category C</h3>
                 <p class="comp-count"><%= categoryBreakdown.C || 0 %> players</p>
                 <p class="comp-value">₹<%= categorySpending.C.toLocaleString('en-IN') %></p>
-            </div>
-            <div class="comp-card comp-D">
-                <h3>Category D</h3>
-                <p class="comp-count"><%= categoryBreakdown.D || 0 %> players</p>
-                <p class="comp-value">₹<%= categorySpending.D.toLocaleString('en-IN') %></p>
             </div>
         </div>
     </div>
