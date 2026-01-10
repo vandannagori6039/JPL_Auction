@@ -192,9 +192,9 @@ export const bulkAddPlayers = async (req, res) => {
 			validPlayers.push({
 				name: playerData.name.trim(),
 				phoneNumber: playerData.phoneNumber.trim(),
-				whatsappName: playerData.whatsappName
-					? playerData.whatsappName.trim()
-					: '',
+				jerseySize: playerData.jerseySize,
+				jerseyNumber: playerData.jerseyNumber,
+				playerType: playerData.playerType,
 				category: playerData.category,
 			});
 		}

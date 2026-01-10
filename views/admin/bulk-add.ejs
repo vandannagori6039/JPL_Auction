@@ -27,12 +27,14 @@
             <table class="bulk-table" id="bulkTable">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">S.No.</th>
-                        <th style="width: 200px;">Player Name *</th>
-                        <th style="width: 150px;">WhatsApp Name</th>
-                        <th style="width: 150px;">Phone Number *</th>
-                        <th style="width: 150px;">Category *</th>
-                        <th style="width: 80px;">Action</th>
+                        <th style="width: 40px;">S.No.</th>
+                        <th style="width: 150px;">Player Name *</th>
+                        <th style="width: 120px;">Phone Number *</th>
+                        <th style="width: 100px;">Jersey Size *</th>
+                        <th style="width: 100px;">Jersey Number</th>
+                        <th style="width: 150px;">Player Type *</th>
+                        <th style="width: 100px;">Category *</th>
+                        <th style="width: 60px;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="bulkTableBody">
@@ -55,6 +57,7 @@
             <li>Fields marked with * are mandatory</li>
             <li>Phone numbers must be exactly 10 digits</li>
             <li>Phone numbers must be unique</li>
+            <li>Jersey Number is optional (0-99)</li>
             <li>Empty rows will be automatically skipped</li>
             <li>You'll see a summary after submission</li>
         </ul>
@@ -92,14 +95,6 @@ function createRow(num) {
         </td>
         <td>
             <input 
-                type="text" 
-                name="players[${num-1}][whatsappName]" 
-                class="form-control form-control-sm"
-                placeholder="WhatsApp name"
-            >
-        </td>
-        <td>
-            <input 
                 type="tel" 
                 name="players[${num-1}][phoneNumber]" 
                 class="form-control form-control-sm phone-input"
@@ -107,6 +102,37 @@ function createRow(num) {
                 maxlength="10"
                 pattern="[0-9]{10}"
             >
+        </td>
+        <td>
+            <select name="players[${num-1}][jerseySize]" class="form-control form-control-sm">
+                <option value="">Select</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+                <option value="XXXL">XXXL</option>
+            </select>
+        </td>
+        <td>
+            <input 
+                type="number" 
+                name="players[${num-1}][jerseyNumber]" 
+                class="form-control form-control-sm"
+                placeholder="0-99"
+                min="0"
+                max="99"
+            >
+        </td>
+        <td>
+            <select name="players[${num-1}][playerType]" class="form-control form-control-sm">
+                <option value="">Select</option>
+                <option value="Batsman">Batsman</option>
+                <option value="Bowler">Bowler</option>
+                <option value="Batting All Rounder">Batting AR</option>
+                <option value="Bowling All Rounder">Bowling AR</option>
+                <option value="Wicket Keeper Batsman">WK Batsman</option>
+            </select>
         </td>
         <td>
             <select name="players[${num-1}][category]" class="form-control form-control-sm">
@@ -157,14 +183,19 @@ document.getElementById('bulkAddForm').addEventListener('submit', async (e) => {
     rows.forEach((row, index) => {
         const name = formData.get(`players[${index}][name]`);
         const phone = formData.get(`players[${index}][phoneNumber]`);
+        const jerseySize = formData.get(`players[${index}][jerseySize]`);
+        const playerType = formData.get(`players[${index}][playerType]`);
         const category = formData.get(`players[${index}][category]`);
         
-        // Only add if name, phone, and category are provided
-        if (name && phone && category) {
+        // Only add if required fields are provided
+        if (name && phone && jerseySize && playerType && category) {
+            const jerseyNumber = formData.get(`players[${index}][jerseyNumber]`);
             players.push({
                 name: name.trim(),
-                whatsappName: formData.get(`players[${index}][whatsappName]`)?.trim() || '',
                 phoneNumber: phone.trim(),
+                jerseySize: jerseySize,
+                jerseyNumber: jerseyNumber ? parseInt(jerseyNumber) : undefined,
+                playerType: playerType,
                 category: category
             });
         }
