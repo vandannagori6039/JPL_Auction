@@ -308,33 +308,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // ============= AUCTION CONTROL FUNCTIONS =============
 
-/**
- * Start auction with a random player
- */
-async function startRandomPlayer() {
-    try {
-        showLoading('Selecting random player...');
-        const response = await fetch('/auction/api/start-random', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            updateCurrentPlayer(result.player, result.auctionState);
-            showToast('Player selected: ' + result.player.name, 'success');
-            // Remove player from sidebar list
-            removePlayerFromList(result.player._id);
-        } else {
-            showToast(result.message || 'Failed to select player', 'error');
-        }
-    } catch (error) {
-        showToast('Error: ' + error.message, 'error');
-    } finally {
-        hideLoading();
-    }
-}
+
 
 /**
  * Select a specific player for auction
@@ -493,12 +467,7 @@ async function undoLastSale() {
     }
 }
 
-/**
- * Skip to next random player
- */
-function skipPlayer() {
-    startRandomPlayer();
-}
+
 
 // ============= UI UPDATE FUNCTIONS =============
 
@@ -516,8 +485,27 @@ function updateCurrentPlayer(player, auctionState) {
     const panel = document.getElementById('currentPlayerPanel');
     if (!panel) return;
     
+    // Build player image HTML
+    let playerImageHTML = '';
+    if (player.imageUrl) {
+        playerImageHTML = `
+            <img src="${player.imageUrl}" alt="${player.name}" 
+                style="width: 180px; height: 180px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" 
+                onerror="this.src='/images/placeholder-player.png'">
+        `;
+    } else {
+        playerImageHTML = `
+            <div style="width: 180px; height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                ${player.name.charAt(0).toUpperCase()}
+            </div>
+        `;
+    }
+    
     panel.innerHTML = `
         <div class="player-showcase animate-in">
+            <div class="player-image-showcase">
+                ${playerImageHTML}
+            </div>
             <div class="player-details">
                 <h1 class="player-name">${player.name}</h1>
                 <div class="player-meta">
@@ -1193,12 +1181,6 @@ function initializeKeyboardShortcuts() {
         // Ctrl/Cmd + Key combinations
         if (e.ctrlKey || e.metaKey) {
             switch(e.key.toLowerCase()) {
-                case 'r':
-                    e.preventDefault();
-                    if (typeof startRandomPlayer === 'function') {
-                        startRandomPlayer();
-                    }
-                    break;
                 case 's':
                     e.preventDefault();
                     if (typeof currentPlayerId !== 'undefined' && currentPlayerId && typeof markSold === 'function') {
@@ -1320,10 +1302,6 @@ function displayShortcutsModal() {
         <div class="modal-content shortcuts-modal">
             <h2>⌨️ Keyboard Shortcuts</h2>
             <div class="shortcuts-grid">
-                <div class="shortcut-item">
-                    <kbd>Ctrl/Cmd + R</kbd>
-                    <span>Random Player</span>
-                </div>
                 <div class="shortcut-item">
                     <kbd>1-8</kbd>
                     <span>Bid for Teams</span>

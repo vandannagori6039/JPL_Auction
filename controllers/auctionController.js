@@ -74,20 +74,23 @@ export const showAuctionControl = async (req, res) => {
 		// Get or create auction state
 		const auctionState = await getOrCreateAuctionState();
 
+		// Clear current player on page refresh to prevent automatic selection
+		// This ensures a clean state when the admin refreshes the page
+		auctionState.currentPlayer = null;
+		auctionState.currentBid = 0;
+		auctionState.currentBidder = null;
+		auctionState.isActive = false;
+		auctionState.bidHistory = [];
+		await auctionState.save();
+
 		// Get all teams with max bid calculated
 		const teams = await getTeamsWithMaxBid();
 
-		// Get current player if auction is active
+		// No current player on page load
 		let currentPlayer = null;
-		if (auctionState.currentPlayer) {
-			currentPlayer = await Player.findById(auctionState.currentPlayer);
-		}
 
-		// Populate current bidder info if exists
+		// No current bidder on page load
 		let currentBidderInfo = null;
-		if (auctionState.currentBidder) {
-			currentBidderInfo = await Team.findById(auctionState.currentBidder).lean();
-		}
 
 		// Get unsold players
 		const unsoldPlayers = await Player.find({ status: 'unsold' }).sort('playerNumber');

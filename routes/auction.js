@@ -9,7 +9,6 @@ import {
 	undoLastSale,
 	getAuctionStats,
 	getAllUnsoldPlayers,
-	startRandomFromCategory,
 } from '../controllers/auctionController.js';
 import { isAuthenticated } from '../middleware/auth.js';
 
@@ -19,29 +18,6 @@ const router = express.Router();
 router.get('/control', isAuthenticated, showAuctionControl);
 
 // AJAX endpoints for auction operations
-
-// Start auction with random player
-router.post('/api/start-random', isAuthenticated, async (req, res) => {
-	try {
-		const { category } = req.body;
-		let result;
-		if (category) {
-			result = await startRandomFromCategory(category);
-		} else {
-			result = await startAuctionForPlayer(null, true);
-		}
-		
-		// Emit socket event for real-time updates
-		if (result.success && req.io) {
-			req.io.to('auction-room').emit('player-selected', result);
-		}
-		
-		res.json(result);
-	} catch (error) {
-		console.error('Error in start-random:', error);
-		res.status(500).json({ success: false, message: error.message });
-	}
-});
 
 // Start auction with specific player
 router.post('/api/start-player', isAuthenticated, async (req, res) => {
