@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'JPL Auction' %></title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <% if (typeof showNav !== 'undefined' && showNav) { %>
+    <nav class="admin-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2>🏏 Jain Premier League</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/admin/dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="/admin/players" class="nav-link">Players</a></li>
+                <li><a href="/admin/teams" class="nav-link">Teams</a></li>
+                <li><a href="/admin/auction" class="nav-link">Auction Control</a></li>
+                <li><a href="/admin/reports" class="nav-link">Reports</a></li>
+                <li><a href="/admin/settings" class="nav-link">Settings</a></li>
+                <li>
+                    <form action="/admin/logout" method="POST" style="display: inline;">
+                        <button type="submit" class="logout-btn">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <% } %>
+    <main class="main-content">

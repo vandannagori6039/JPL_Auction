@@ -1,0 +1,37 @@
+<%- include('../partials/header', {title: 'Admin Login', showNav: false}) %>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h1>🏏 JPL Auction</h1>
+            <p>Admin Login</p>
+        </div>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error">
+                <%= error %>
+            </div>
+        <% } %>
+        
+        <form action="/admin/login" method="POST" class="login-form">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-control" 
+                    required 
+                    autofocus
+                    placeholder="Enter admin password"
+                >
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                Login to Admin Panel
+            </button>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

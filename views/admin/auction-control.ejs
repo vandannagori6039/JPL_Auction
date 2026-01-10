@@ -1,0 +1,325 @@
+<%- include('../partials/header', {title: 'Auction Control', showNav: true}) %>
+
+<div class="auction-control-container">
+    
+    <!-- Top Bar with Quick Stats -->
+    <div class="auction-top-bar">
+        <div class="quick-stats">
+            <div class="stat-item">
+                <span class="stat-label">Round:</span>
+                <span class="stat-value" id="roundNumber"><%= auctionState.roundNumber || 0 %></span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Sold:</span>
+                <span class="stat-value stat-success" id="soldCount"><%= soldCount %></span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Remaining:</span>
+                <span class="stat-value stat-warning" id="unsoldCount"><%= unsoldCount %></span>
+            </div>
+        </div>
+        
+        <div class="auction-controls-top">
+            <button class="btn btn-primary" id="startRandomBtn" onclick="startRandomPlayer()">
+                🎲 Random Player
+            </button>
+            <button class="btn btn-secondary" id="skipBtn" onclick="skipPlayer()">
+                ⏭️ Skip
+            </button>
+            <button class="btn btn-danger" id="undoBtn" onclick="undoLastSale()">
+                ↩️ Undo Last
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Auction Area -->
+    <div class="auction-main-area">
+        
+        <!-- Left Sidebar: Player Selection & Info -->
+        <div class="auction-sidebar">
+            <div class="sidebar-section">
+                <h3>Manual Player Selection</h3>
+                
+                <!-- Category Filter Buttons -->
+                <div class="category-filters">
+                    <button class="filter-btn active" onclick="filterCategory('all', this)">
+                        All (<span id="countAll"><%= unsoldCount %></span>)
+                    </button>
+                    <button class="filter-btn" onclick="filterCategory('A', this)">
+                        A (<span id="countA"><%= unsoldByCategory.A || 0 %></span>)
+                    </button>
+                    <button class="filter-btn" onclick="filterCategory('B', this)">
+                        B (<span id="countB"><%= unsoldByCategory.B || 0 %></span>)
+                    </button>
+                    <button class="filter-btn" onclick="filterCategory('C', this)">
+                        C (<span id="countC"><%= unsoldByCategory.C || 0 %></span>)
+                    </button>
+                    <button class="filter-btn" onclick="filterCategory('D', this)">
+                        D (<span id="countD"><%= unsoldByCategory.D || 0 %></span>)
+                    </button>
+                </div>
+
+                <!-- Player Search -->
+                <input 
+                    type="text" 
+                    id="playerSearch" 
+                    class="form-control" 
+                    placeholder="Search player..."
+                    onkeyup="searchPlayers()"
+                >
+
+                <!-- Player List -->
+                <div class="players-list" id="playersList">
+                    <% unsoldPlayers.forEach(player => { %>
+                        <div class="player-list-item" data-category="<%= player.category %>" data-player-id="<%= player._id %>" onclick="selectPlayer('<%= player._id %>')">
+                            <div class="player-info">
+                                <span class="player-number">#<%= player.playerNumber %></span>
+                                <span class="player-name-text"><%= player.name %></span>
+                            </div>
+                            <span class="badge badge-<%= player.category %>"><%= player.category %></span>
+                        </div>
+                    <% }) %>
+                    <% if (unsoldPlayers.length === 0) { %>
+                        <p class="no-players">No unsold players available</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Bid History -->
+            <div class="sidebar-section">
+                <h3>Bid History</h3>
+                <div class="bid-history" id="bidHistory">
+                    <% if (auctionState.bidHistory && auctionState.bidHistory.length > 0) { %>
+                        <% auctionState.bidHistory.slice().reverse().forEach(bid => { %>
+                            <div class="bid-entry">
+                                <span><%= bid.teamName %></span>
+                                <span class="bid-amount">₹<%= bid.bidAmount.toLocaleString('en-IN') %></span>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="no-bids">No bids yet</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center: Current Player & Bidding -->
+        <div class="auction-center">
+            
+            <!-- Current Player Display -->
+            <div class="current-player-panel" id="currentPlayerPanel">
+                <% if (currentPlayer) { %>
+                    <div class="player-showcase">
+                        <div class="player-details">
+                            <h1 class="player-name"><%= currentPlayer.name %></h1>
+                            <div class="player-meta">
+                                <span class="player-number">#<%= currentPlayer.playerNumber %></span>
+                                <span class="badge badge-<%= currentPlayer.category %> badge-lg">
+                                    Category <%= currentPlayer.category %>
+                                </span>
+                            </div>
+                            <div class="base-price">
+                                Base Price: ₹<%= currentPlayer.basePrice.toLocaleString('en-IN') %>
+                            </div>
+                        </div>
+
+                        <!-- Current Bid Display -->
+                        <div class="current-bid-display">
+                            <div class="bid-label">Current Bid</div>
+                            <div class="bid-amount-display" id="currentBidAmount">
+                                ₹<%= (auctionState.currentBid || currentPlayer.basePrice).toLocaleString('en-IN') %>
+                            </div>
+                            <div class="bidding-team" id="biddingTeam">
+                                <% if (auctionState.currentBidder) { %>
+                                    <%= auctionState.currentBidder.teamName %>
+                                <% } else { %>
+                                    No bids yet
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="no-player-selected">
+                        <h2>No Player Selected</h2>
+                        <p>Click "Random Player" or select from the list</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Team Bidding Grid -->
+            <div class="teams-bidding-grid" id="teamsBiddingGrid">
+                <% teams.forEach(team => { %>
+                    <div class="team-bid-card" data-team-id="<%= team._id %>" style="border-left: 4px solid <%= team.color %>">
+                        <div class="team-header">
+                            <h3 style="color: <%= team.color %>"><%= team.teamName %></h3>
+                        </div>
+                        
+                        <div class="team-bid-info">
+                            <div class="info-line">
+                                <span>Purse:</span>
+                                <span class="purse-amount" data-team-purse="<%= team.remainingPurse %>">
+                                    ₹<%= team.remainingPurse.toLocaleString('en-IN') %>
+                                </span>
+                            </div>
+                            <div class="info-line">
+                                <span>Players:</span>
+                                <span class="players-count"><%= team.playersCount %>/11</span>
+                            </div>
+                            <div class="info-line">
+                                <span>Max Bid:</span>
+                                <span class="max-bid" data-max-bid="<%= team.maxBidAllowed %>">
+                                    ₹<%= team.maxBidAllowed.toLocaleString('en-IN') %>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="bid-options">
+                            <button 
+                                class="btn-bid btn-bid-quick" 
+                                onclick="placeBid('<%= team._id %>', 200)"
+                                data-team-id="<%= team._id %>"
+                                <%= team.playersCount >= 11 || !currentPlayer ? 'disabled' : '' %>
+                            >
+                                +200
+                            </button>
+                            <button 
+                                class="btn-bid btn-bid-quick" 
+                                onclick="placeBid('<%= team._id %>', 500)"
+                                data-team-id="<%= team._id %>"
+                                <%= team.playersCount >= 11 || !currentPlayer ? 'disabled' : '' %>
+                            >
+                                +500
+                            </button>
+                            <button 
+                                class="btn-bid btn-bid-quick" 
+                                onclick="placeBid('<%= team._id %>', 1000)"
+                                data-team-id="<%= team._id %>"
+                                <%= team.playersCount >= 11 || !currentPlayer ? 'disabled' : '' %>
+                            >
+                                +1000
+                            </button>
+                            <button 
+                                class="btn-bid btn-bid-custom" 
+                                onclick="openCustomBidModal('<%= team._id %>', '<%= team.teamName %>')"
+                                data-team-id="<%= team._id %>"
+                                <%= team.playersCount >= 11 || !currentPlayer ? 'disabled' : '' %>
+                            >
+                                Custom
+                            </button>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+
+            <!-- Main Action Buttons -->
+            <div class="main-actions">
+                <button 
+                    class="btn btn-success btn-large" 
+                    id="soldBtn" 
+                    onclick="markSold()"
+                    <%= !currentPlayer || !auctionState.currentBidder ? 'disabled' : '' %>
+                >
+                    ✓ SOLD
+                </button>
+                <button 
+                    class="btn btn-danger btn-large" 
+                    id="unsoldBtn" 
+                    onclick="markUnsold()"
+                    <%= !currentPlayer ? 'disabled' : '' %>
+                >
+                    ✗ UNSOLD
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: Quick Actions & Recent Sales -->
+        <div class="auction-sidebar-right">
+            <div class="sidebar-section">
+                <h3>Quick Actions</h3>
+                <div class="quick-actions-list">
+                    <button class="action-btn" onclick="viewAllPlayers()">
+                        📋 View All Players
+                    </button>
+                    <button class="action-btn" onclick="viewTeams()">
+                        🏆 View Teams
+                    </button>
+                    <button class="action-btn" onclick="openDisplayWindow()">
+                        📺 Open Public Display
+                    </button>
+                    <button class="action-btn" onclick="refreshStats()">
+                        🔄 Refresh Stats
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Recent Sales</h3>
+                <div class="recent-sales" id="recentSales">
+                    <% if (recentSales && recentSales.length > 0) { %>
+                        <% recentSales.forEach(sale => { %>
+                            <div class="sale-entry">
+                                <div class="sale-player"><%= sale.name %></div>
+                                <div class="sale-team" style="color: <%= sale.soldTo ? sale.soldTo.color : '#666' %>">
+                                    <%= sale.soldTo ? sale.soldTo.teamName : 'Unknown' %>
+                                </div>
+                                <div class="sale-price">₹<%= sale.soldPrice.toLocaleString('en-IN') %></div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="no-sales">No sales yet</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notifications -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3 id="confirmTitle">Confirm Action</h3>
+        <p id="confirmMessage"></p>
+        <div class="modal-actions">
+            <button class="btn btn-primary" id="confirmYes">Yes</button>
+            <button class="btn btn-secondary" id="confirmNo">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p id="loadingMessage">Loading...</p>
+</div>
+
+<!-- Custom Bid Modal -->
+<div class="modal" id="customBidModal" style="display: none;">
+    <div class="modal-content">
+        <h3>Custom Bid Amount</h3>
+        <p>Team: <strong id="customBidTeamName"></strong></p>
+        <p>Current Bid: <strong id="customBidCurrentAmount"></strong></p>
+        <div class="form-group">
+            <label for="customBidInput">Enter Bid Amount:</label>
+            <input type="number" id="customBidInput" class="form-control" placeholder="Enter amount" step="100" min="0">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="submitCustomBid()">Place Bid</button>
+            <button class="btn btn-secondary" onclick="closeCustomBidModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let currentCategory = 'all';
+let currentPlayerId = '<%= currentPlayer ? currentPlayer._id : "" %>';
+let currentAuctionState = <%- JSON.stringify(auctionState) %>;
+let teams = <%- JSON.stringify(teams) %>;
+</script>
+
+<script src="/js/admin.js"></script>
+
+<%- include('../partials/footer') %>
