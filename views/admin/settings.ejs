@@ -1,51 +1,51 @@
-<%- include('../partials/header', {title: 'Settings & Utilities', showNav: true}) %>
+<%- include('../partials/header', {title: 'Settings & Utilities', showNav: true, activePage: 'settings'}) %>
 
 <div class="settings-container">
     <div class="page-header">
-        <h1>Settings & Utilities</h1>
+        <h1><i class="fa-solid fa-gear"></i> Settings & Utilities</h1>
         <p>Manage auction settings and run utility functions</p>
     </div>
 
-    <div class="danger-zone">
-        <h2>⚠️ Danger Zone</h2>
+    <div class="danger-zone glass-card">
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h2>
         <p>These actions are irreversible. Use with extreme caution.</p>
         
         <div class="danger-actions">
             <button class="btn btn-warning" onclick="confirmResetAuctionKeepData()" 
                     style="background-color: #ff9800;">
-                🔄 Reset Auction (Keep Players & Teams)
+                <i class="fa-solid fa-rotate"></i> Reset Auction (Keep Players & Teams)
             </button>
             <button class="btn btn-danger" onclick="confirmResetAuction()">
-                ❌ Reset Entire Auction
+                <i class="fa-solid fa-trash-can"></i> Reset Entire Auction
             </button>
             <button class="btn btn-warning" onclick="validateIntegrity()">
-                Validate Auction Integrity
+                <i class="fa-solid fa-clipboard-check"></i> Validate Auction Integrity
             </button>
             <button class="btn btn-secondary" onclick="recalculateStats()">
-                Recalculate Team Stats
+                <i class="fa-solid fa-calculator"></i> Recalculate Team Stats
             </button>
         </div>
     </div>
 
-    <div class="utility-section">
-        <h2>Database Utilities</h2>
+    <div class="utility-section glass-card">
+        <h2><i class="fa-solid fa-database"></i> Database Utilities</h2>
         <div class="utility-buttons">
             <button class="btn btn-primary" onclick="exportDatabase()">
-                Export Database Backup
+                <i class="fa-solid fa-download"></i> Export Database Backup
             </button>
             <button class="btn btn-secondary" onclick="viewLogs()">
-                View System Logs
+                <i class="fa-solid fa-scroll"></i> View System Logs
             </button>
         </div>
     </div>
 
-    <div class="utility-section">
-        <h2>Auction Progress</h2>
+    <div class="utility-section glass-card">
+        <h2><i class="fa-solid fa-spinner"></i> Auction Progress</h2>
         <div id="auction-progress-info">
             <p>Loading...</p>
         </div>
         <button class="btn btn-info" onclick="refreshProgress()" style="margin-top: 1rem;">
-            🔄 Refresh Progress
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh Progress
         </button>
     </div>
 

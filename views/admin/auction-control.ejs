@@ -1,4 +1,4 @@
-<%- include('../partials/header', {title: 'Auction Control', showNav: true}) %>
+<%- include('../partials/header', {title: 'Auction Control', showNav: true, activePage: 'auction'}) %>
 
 <div class="auction-control-container">
 
@@ -8,7 +8,7 @@
         <!-- Left Sidebar: Player Selection & Info -->
         <div class="auction-sidebar">
             <div class="sidebar-section">
-                <h3>Manual Player Selection</h3>
+                <h3><i class="fa-solid fa-hand-pointer"></i> Manual Player Selection</h3>
                 
                 <!-- Category Filter Buttons -->
                 <div class="category-filters">
@@ -37,6 +37,7 @@
                     placeholder="Search player..."
                     onkeyup="searchPlayers()"
                 >
+                <i class="fa-solid fa-search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"></i>
 
                 <!-- Player List -->
                 <div class="players-list" id="playersList">
@@ -53,14 +54,14 @@
                         </div>
                     <% }) %>
                     <% if (unsoldPlayers.length === 0) { %>
-                        <p class="no-players">No unsold players available</p>
+                        <p class="no-players"><i class="fa-solid fa-ghost"></i> No unsold players available</p>
                     <% } %>
                 </div>
             </div>
 
             <!-- Bid History -->
             <div class="sidebar-section">
-                <h3>Bid History</h3>
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Bid History</h3>
                 <div class="bid-history" id="bidHistory">
                     <% if (auctionState.bidHistory && auctionState.bidHistory.length > 0) { %>
                         <% auctionState.bidHistory.slice().reverse().forEach(bid => { %>
@@ -125,6 +126,7 @@
                     </div>
                 <% } else { %>
                     <div class="no-player-selected">
+                        <i class="fa-solid fa-gavel" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
                         <h2>No Player Selected</h2>
                         <p>Click "Random Player" or select from the list</p>
                     </div>
@@ -216,7 +218,7 @@
                     onclick="markSold()"
                     <%= !currentPlayer || !auctionState.currentBidder ? 'disabled' : '' %>
                 >
-                    ✓ SOLD
+                    <i class="fa-solid fa-check"></i> SOLD
                 </button>
                 <button 
                     class="btn btn-danger btn-large" 
@@ -224,18 +226,18 @@
                     onclick="markUnsold()"
                     <%= !currentPlayer ? 'disabled' : '' %>
                 >
-                    ✗ UNSOLD
+                    <i class="fa-solid fa-xmark"></i> UNSOLD
                 </button>
                 <button class="btn btn-secondary btn-undo" id="undoBtn" onclick="undoLastSale()">
-                    ↩️ Undo Last Sale
+                    <i class="fa-solid fa-rotate-left"></i> Undo Last Sale
                 </button>
                 <button class="btn btn-secondary btn-undo" id="shortcutsBtn" onclick="displayShortcutsModal()">
-                    ⌨️ Shortcuts
+                    <i class="fa-solid fa-keyboard"></i> Shortcuts
                 </button>
             </div>
 
             <div class="sidebar-section">
-                <h3>Recent Sales</h3>
+                <h3><i class="fa-solid fa-receipt"></i> Recent Sales</h3>
                 <div class="recent-sales" id="recentSales">
                     <% if (recentSales && recentSales.length > 0) { %>
                         <% recentSales.forEach(sale => { %>
@@ -312,6 +314,6 @@ let currentAuctionState = <%- JSON.stringify(auctionState) %>;
 let teams = <%- JSON.stringify(teams) %>;
 </script>
 
-<script src="/js/admin.js"></script>
+<!-- admin.js is loaded via footer partial -->
 
 <%- include('../partials/footer') %>

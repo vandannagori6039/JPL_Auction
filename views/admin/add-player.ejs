@@ -1,20 +1,20 @@
-<%- include('../partials/header', {title: 'Add Player', showNav: true}) %>
+<%- include('../partials/header', {title: 'Add Player', showNav: true, activePage: 'players'}) %>
 
 <div class="form-container">
     <div class="form-header">
-        <h1>Add New Player</h1>
+        <h1><i class="fa-solid fa-user-plus"></i> Add New Player</h1>
         <p>Enter player details for registration</p>
     </div>
 
     <% if (typeof success !== 'undefined' && success) { %>
         <div class="alert alert-success">
-            <%= success %>
+            <i class="fa-solid fa-circle-check"></i> <%= success %>
         </div>
     <% } %>
 
     <% if (typeof error !== 'undefined' && error) { %>
         <div class="alert alert-error">
-            <%= error %>
+            <i class="fa-solid fa-circle-exclamation"></i> <%= error %>
         </div>
     <% } %>
 
@@ -97,9 +97,9 @@
                 <label for="category">Category <span class="required">*</span></label>
                 <select id="category" name="category" class="form-control" required>
                     <option value="">Select Category</option>
-                    <option value="A">Category A - ₹5,000 (Best Players)</option>
-                    <option value="B">Category B - ₹3,000 (Mid-Tier)</option>
-                    <option value="C">Category C - ₹2,000</option>
+                    <option value="A">Category A - ₹75,000 (Best Players)</option>
+                    <option value="B">Category B - ₹30,000 (Mid-Tier)</option>
+                    <option value="C">Category C - ₹10,000</option>
                 </select>
             </div>
         </div>
@@ -119,14 +119,14 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Add Player</button>
-            <button type="button" class="btn btn-secondary" onclick="document.getElementById('addPlayerForm').reset()">Clear Form</button>
-            <a href="/admin/players" class="btn btn-outline">View All Players</a>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Player</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('addPlayerForm').reset()"><i class="fa-solid fa-rotate-left"></i> Clear Form</button>
+            <a href="/admin/players" class="btn btn-outline"><i class="fa-solid fa-list"></i> View All Players</a>
         </div>
     </form>
 
-    <div class="form-tips">
-        <h3>Quick Tips:</h3>
+    <div class="form-tips glass-card">
+        <h3><i class="fa-solid fa-lightbulb"></i> Quick Tips:</h3>
         <ul>
             <li>All fields marked with <span class="required">*</span> are mandatory</li>
             <li>Phone numbers must be unique (no duplicates)</li>

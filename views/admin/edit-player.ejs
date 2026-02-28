@@ -1,20 +1,20 @@
-<%- include('../partials/header', {title: 'Edit Player', showNav: true}) %>
+<%- include('../partials/header', {title: 'Edit Player', showNav: true, activePage: 'players'}) %>
 
 <div class="form-container">
     <div class="form-header">
-        <h1>Edit Player</h1>
+        <h1><i class="fa-solid fa-user-pen"></i> Edit Player</h1>
         <p>Update player details</p>
     </div>
 
     <% if (typeof success !== 'undefined' && success) { %>
         <div class="alert alert-success">
-            <%= success %>
+            <i class="fa-solid fa-circle-check"></i> <%= success %>
         </div>
     <% } %>
 
     <% if (typeof error !== 'undefined' && error) { %>
         <div class="alert alert-error">
-            <%= error %>
+            <i class="fa-solid fa-circle-exclamation"></i> <%= error %>
         </div>
     <% } %>
 
@@ -25,7 +25,7 @@
                 <span class="status-badge status-<%= player.status %>"><%= player.status %></span>
             </p>
             <% if (player.status === 'sold') { %>
-                <p class="warning-text">⚠️ This player is sold. Category cannot be changed.</p>
+                <p class="warning-text"><i class="fa-solid fa-triangle-exclamation"></i> This player is sold. Category cannot be changed.</p>
             <% } %>
         </div>
 
@@ -151,13 +151,13 @@
         <% } %>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Update Player</button>
-            <a href="/admin/players" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Update Player</button>
+            <a href="/admin/players" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Cancel</a>
         </div>
     </form>
 
-    <div class="form-tips">
-        <h3>Edit Tips:</h3>
+    <div class="form-tips glass-card">
+        <h3><i class="fa-solid fa-lightbulb"></i> Edit Tips:</h3>
         <ul>
             <li>All fields marked with <span class="required">*</span> are mandatory</li>
             <li>Phone numbers must be unique across all players</li>

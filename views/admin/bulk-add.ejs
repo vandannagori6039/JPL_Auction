@@ -1,14 +1,14 @@
-<%- include('../partials/header', {title: 'Bulk Add Players', showNav: true}) %>
+<%- include('../partials/header', {title: 'Bulk Add Players', showNav: true, activePage: 'players'}) %>
 
 <div class="bulk-add-container">
     <div class="page-header">
-        <h1>Bulk Add Players</h1>
+        <h1><i class="fa-solid fa-list-check"></i> Bulk Add Players</h1>
         <p>Add multiple players at once</p>
     </div>
 
-    <div class="bulk-info">
-        <p>Enter player details in the table below. You can add up to 50 players at once.</p>
-        <p><strong>Tip:</strong> Empty rows will be ignored automatically.</p>
+    <div class="bulk-info glass-card">
+        <p><i class="fa-solid fa-circle-info"></i> Enter player details in the table below. You can add up to 50 players at once.</p>
+        <p><strong><i class="fa-solid fa-lightbulb"></i> Tip:</strong> Empty rows will be ignored automatically.</p>
     </div>
 
     <div id="result-message"></div>
@@ -16,10 +16,10 @@
     <form id="bulkAddForm">
         <div class="table-controls">
             <button type="button" class="btn btn-secondary" onclick="addMoreRows(10)">
-                Add 10 More Rows
+                <i class="fa-solid fa-plus"></i> Add 10 More Rows
             </button>
             <button type="button" class="btn btn-secondary" onclick="clearAllRows()">
-                Clear All
+                <i class="fa-solid fa-broom"></i> Clear All
             </button>
         </div>
 
@@ -46,14 +46,14 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary btn-lg">
-                Submit All Players
+                <i class="fa-solid fa-paper-plane"></i> Submit All Players
             </button>
-            <a href="/admin/players" class="btn btn-outline">Cancel</a>
+            <a href="/admin/players" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Cancel</a>
         </div>
     </form>
 
-    <div class="bulk-tips">
-        <h3>Instructions:</h3>
+    <div class="bulk-tips glass-card">
+        <h3><i class="fa-solid fa-circle-info"></i> Instructions:</h3>
         <ul>
             <li>Fields marked with * are mandatory</li>
             <li>Phone numbers must be exactly 10 digits</li>

@@ -1,4 +1,4 @@
-<%- include('../partials/header', {title: team.teamName + ' Details', showNav: true}) %>
+<%- include('../partials/header', {title: team.teamName + ' Details', showNav: true, activePage: 'teams'}) %>
 
 <div class="team-details-container">
     <!-- Team Header -->
@@ -12,7 +12,7 @@
                 Team #<%= team.teamNumber %>
             </span>
         </div>
-        <a href="/admin/teams" class="btn btn-secondary">Back to Teams</a>
+        <a href="/admin/teams" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back to Teams</a>
     </div>
 
     <!-- Team Statistics -->
@@ -40,8 +40,8 @@
     </div>
 
     <!-- Squad Composition -->
-    <div class="squad-section">
-        <h2>Squad Composition by Category</h2>
+    <div class="squad-section glass-card">
+        <h2><i class="fa-solid fa-chart-pie"></i> Squad Composition by Category</h2>
         <div class="composition-grid">
             <div class="comp-card comp-A">
                 <h3>Category A</h3>
@@ -62,8 +62,8 @@
     </div>
 
     <!-- Players List -->
-    <div class="players-section">
-        <h2>Squad Players (<%= team.playersCount %>)</h2>
+    <div class="players-section glass-card">
+        <h2><i class="fa-solid fa-users"></i> Squad Players (<%= team.playersCount %>)</h2>
         
         <% if (team.players && team.players.length > 0) { %>
             <table class="squad-table">
@@ -109,14 +109,15 @@
             </table>
         <% } else { %>
             <div class="no-players">
+                <i class="fa-solid fa-users-slash" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
                 <p>No players bought yet</p>
             </div>
         <% } %>
     </div>
 
     <!-- Insights -->
-    <div class="insights-section">
-        <h2>Team Insights</h2>
+    <div class="insights-section glass-card">
+        <h2><i class="fa-solid fa-chart-line"></i> Team Insights</h2>
         <div class="insights-grid">
             <div class="insight-card">
                 <h4>Most Expensive Player</h4>

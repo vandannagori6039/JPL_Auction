@@ -1,11 +1,11 @@
-<%- include('../partials/header', {title: 'Teams Management', showNav: true}) %>
+<%- include('../partials/header', {title: 'Teams Management', showNav: true, activePage: 'teams'}) %>
 
 <div class="teams-management-container">
     <div class="page-header">
-        <h1>Teams Management</h1>
+        <h1><i class="fa-solid fa-shield-halved"></i> Teams Management</h1>
         <% if (teams && teams.length === 0) { %>
             <form method="POST" action="/admin/teams/create">
-                <button type="submit" class="btn btn-primary">Create 8 Teams</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create 8 Teams</button>
             </form>
         <% } %>
     </div>
@@ -46,7 +46,7 @@
                                 onclick="editTeamName('<%= team._id %>', '<%= team.teamName %>')"
                                 title="Edit Team Name"
                             >
-                                ✏️
+                                <i class="fa-solid fa-pen"></i>
                             </button>
                         </h2>
                         <span class="team-number">#<%= team.teamNumber %></span>
@@ -62,7 +62,7 @@
                                     onclick="editCaptain('<%= team._id %>', '<%= team.captain %>')"
                                     title="Edit Captain"
                                 >
-                                    ✏️
+                                    <i class="fa-solid fa-pen"></i>
                                 </button>
                             </span>
                         </div>
@@ -135,13 +135,13 @@
                     <!-- Actions -->
                     <div class="team-actions">
                         <a href="/admin/teams/<%= team._id %>" class="btn btn-sm btn-primary">
-                            View Details
+                            <i class="fa-solid fa-eye"></i> View Details
                         </a>
                         <button 
                             class="btn btn-sm btn-danger" 
                             onclick="resetTeam('<%= team._id %>', '<%= team.teamName %>')"
                         >
-                            Reset Team
+                            <i class="fa-solid fa-rotate-left"></i> Reset Team
                         </button>
                     </div>
                 </div>
@@ -150,11 +150,12 @@
     <% } else { %>
         <div class="no-teams">
             <div class="no-teams-content">
+                <i class="fa-solid fa-shield-halved" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
                 <h2>No Teams Created Yet</h2>
                 <p>Create 8 teams to start the auction process</p>
                 <form method="POST" action="/admin/teams/create">
                     <button type="submit" class="btn btn-primary btn-lg">
-                        Create 8 Teams Now
+                        <i class="fa-solid fa-plus"></i> Create 8 Teams Now
                     </button>
                 </form>
             </div>

@@ -1,15 +1,17 @@
-<%- include('../partials/header', {title: 'Reports & Analytics', showNav: true}) %>
+<%- include('../partials/header', {title: 'Reports & Analytics', showNav: true, activePage: 'reports'}) %>
 
 <div class="reports-container">
     <div class="page-header">
-        <h1>Reports & Analytics</h1>
+        <h1><i class="fa-solid fa-chart-column"></i> Reports & Analytics</h1>
         <p>Export data and view detailed statistics</p>
     </div>
 
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card stat-primary">
-            <div class="stat-icon">📊</div>
+            <div class="stat-icon-wrapper bg-primary">
+                <i class="fa-solid fa-chart-bar"></i>
+            </div>
             <div class="stat-content">
                 <h3><%= stats.soldCount %></h3>
                 <p>Players Sold</p>
@@ -17,7 +19,9 @@
         </div>
 
         <div class="stat-card stat-warning">
-            <div class="stat-icon">⏳</div>
+            <div class="stat-icon-wrapper bg-warning">
+                <i class="fa-solid fa-clock"></i>
+            </div>
             <div class="stat-content">
                 <h3><%= stats.unsoldCount %></h3>
                 <p>Players Unsold</p>
@@ -25,7 +29,9 @@
         </div>
 
         <div class="stat-card stat-success">
-            <div class="stat-icon">💰</div>
+            <div class="stat-icon-wrapper bg-success">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
             <div class="stat-content">
                 <h3>₹<%= stats.totalValue.toLocaleString('en-IN') %></h3>
                 <p>Total Auction Value</p>
@@ -33,7 +39,9 @@
         </div>
 
         <div class="stat-card stat-info">
-            <div class="stat-icon">📈</div>
+            <div class="stat-icon-wrapper bg-info">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
             <div class="stat-content">
                 <h3>₹<%= Math.round(stats.avgPrice).toLocaleString('en-IN') %></h3>
                 <p>Average Price</p>
@@ -42,24 +50,24 @@
     </div>
 
     <!-- Export Options -->
-    <div class="export-section">
-        <h2>Export Options</h2>
+    <div class="export-section glass-card">
+        <h2><i class="fa-solid fa-file-export"></i> Export Options</h2>
         <div class="export-buttons">
             <a href="/admin/reports/export/sold-players" class="btn btn-success">
-                📥 Export Sold Players (Excel)
+                <i class="fa-solid fa-file-excel"></i> Export Sold Players (Excel)
             </a>
             <a href="/admin/reports/export/unsold-players" class="btn btn-warning">
-                📥 Export Unsold Players (Excel)
+                <i class="fa-solid fa-file-excel"></i> Export Unsold Players (Excel)
             </a>
             <a href="/admin/reports/export/team-sheets" class="btn btn-primary">
-                📥 Export All Team Sheets (Excel)
+                <i class="fa-solid fa-file-excel"></i> Export All Team Sheets (Excel)
             </a>
         </div>
     </div>
 
     <!-- Category Breakdown -->
-    <div class="category-analysis">
-        <h2>Category-wise Analysis</h2>
+    <div class="category-analysis glass-card">
+        <h2><i class="fa-solid fa-layer-group"></i> Category-wise Analysis</h2>
         <div class="category-grid">
             <% ['A', 'B', 'C', 'D'].forEach(cat => { %>
                 <div class="category-card cat-<%= cat %>">
@@ -85,8 +93,8 @@
 
     <!-- Highest Sale -->
     <% if (stats.highestSale) { %>
-        <div class="highlight-section">
-            <h2>🏆 Highest Sale</h2>
+        <div class="highlight-section glass-card">
+            <h2><i class="fa-solid fa-trophy"></i> Highest Sale</h2>
             <div class="highlight-card">
                 <h3><%= stats.highestSale.name %></h3>
                 <p class="highlight-detail">
@@ -105,8 +113,8 @@
     <% } %>
 
     <!-- Team-wise Reports -->
-    <div class="team-reports-section">
-        <h2>Team Reports</h2>
+    <div class="team-reports-section glass-card">
+        <h2><i class="fa-solid fa-users-rectangle"></i> Team Reports</h2>
         <div class="teams-report-grid">
             <% teams.forEach(team => { %>
                 <div class="team-report-card" style="border-left: 5px solid <%= team.color %>">
@@ -126,7 +134,7 @@
                             View Details
                         </a>
                         <a href="/admin/reports/team-pdf/<%= team._id %>" class="btn btn-sm btn-primary">
-                            📄 Download PDF
+                            <i class="fa-solid fa-file-pdf"></i> Download PDF
                         </a>
                     </div>
                 </div>
@@ -135,8 +143,8 @@
     </div>
 
     <!-- Top 10 Most Expensive Players -->
-    <div class="top-players-section">
-        <h2>💎 Top 10 Most Expensive Players</h2>
+    <div class="top-players-section glass-card">
+        <h2><i class="fa-solid fa-gem"></i> Top 10 Most Expensive Players</h2>
         <table class="top-players-table">
             <thead>
                 <tr>
