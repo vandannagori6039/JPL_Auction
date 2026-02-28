@@ -11,7 +11,7 @@ export const showLogin = (req, res) => {
 export const handleLogin = (req, res) => {
   const { password } = req.body;
   
-  if (password === process.env.ADMIN_PASSWORD) {
+  if (password && password.trim() === (process.env.ADMIN_PASSWORD || '').trim()) {
     req.session.isAdmin = true;
     req.session.adminName = 'Admin';
     return res.redirect('/admin/dashboard');
@@ -83,7 +83,7 @@ export const showDashboard = async (req, res) => {
       const spent = team.initialPurse - team.remainingPurse;
       const maxSpent = max.initialPurse - max.remainingPurse;
       return spent > maxSpent ? team : max;
-    }, teams[0] || { initialPurse: 100000, remainingPurse: 100000 });
+    }, teams[0] || { initialPurse: 1000000, remainingPurse: 1000000 });
 
     res.render('admin/dashboard', {
       totalPlayers,

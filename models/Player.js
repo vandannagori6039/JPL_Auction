@@ -3,9 +3,9 @@ import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
 const CATEGORY_BASE_PRICE = {
-	A: 5000,
-	B: 3000,
-	C: 2000,
+	A: 75000,
+	B: 30000,
+	C: 10000,
 };
 
 const PLAYER_TYPES = [
@@ -59,6 +59,7 @@ const playerSchema = new Schema({
 	soldTo: { type: Schema.Types.ObjectId, ref: 'Team', default: null },
 	soldPrice: { type: Number, default: 0 },
 	playerNumber: { type: Number, unique: true },
+	auctionOrder: { type: Number, default: 0 },
 	registrationDate: { type: Date, default: Date.now },
 	createdAt: { type: Date, default: Date.now },
 });

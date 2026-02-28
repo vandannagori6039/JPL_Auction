@@ -17,38 +17,32 @@
                             src="/images/JPL_Logo.png"
                             alt="JPL Logo"
                             class="tournament-logo"
+                            onerror="this.style.display='none'"
                         />
                         <h1 class="tournament-title">JAIN PREMIER LEAGUE</h1>
                     </div>
                     <div class="header-stats">
                         <span class="header-stat">
                             Round:
-                            <strong id="displayRound"
-                                ><%= auctionState.roundNumber || 0 %></strong
-                            >
+                            <strong id="displayRound"><%= auctionState.roundNumber || 0 %></strong>
                         </span>
                         <span class="header-stat">
                             Sold:
-                            <strong id="displaySold"><%= soldCount %></strong
-                            >/<%= totalPlayers %>
+                            <strong id="displaySold"><%= soldCount %></strong>/<%= totalPlayers %>
                         </span>
-                        <span
-                            class="header-stat connection-status"
-                            id="connectionStatus"
-                        >
+                        <span class="header-stat connection-status" id="connectionStatus">
                             🟢 Live
+                        </span>
+                        <span class="header-stat">
+                            <strong id="liveClock"></strong>
                         </span>
                     </div>
                 </div>
             </header>
-
             <!-- Main Display Area -->
             <main class="display-main">
                 <!-- Current Player Section -->
-                <section
-                    class="current-player-section"
-                    id="currentPlayerSection"
-                >
+                <section class="current-player-section" id="currentPlayerSection">
                     <% if (currentPlayer) { %>
                     <div class="player-display">
                         <% if (currentPlayer.imageUrl) { %>
@@ -62,57 +56,39 @@
                         </div>
                         <% } %>
                         <div class="player-display-left">
-                            <div class="player-display-number">
-                                #<%= currentPlayer.playerNumber %>
-                            </div>
-                            <h2 class="player-display-name">
-                                <%= currentPlayer.name %>
-                            </h2>
                             <div class="player-display-info">
-                                <span class="player-type-badge"
-                                    ><%= currentPlayer.playerType %></span
-                                >
+                                <span class="player-type-badge"><%= currentPlayer.playerType %></span>
                             </div>
+                            <h2 class="player-display-name"><%= currentPlayer.name %></h2>
+                            <% if (currentPlayer.category) { %>
+                            <div class="category-badge cat-<%= currentPlayer.category %>">
+                                CAT <%= currentPlayer.category %>
+                            </div>
+                            <% } %>
                             <div class="player-display-base">
-                                Base Price: ₹<%=
-                                currentPlayer.basePrice.toLocaleString('en-IN')
-                                %>
+                                Base Price: ₹<%= currentPlayer.basePrice.toLocaleString('en-IN') %>
                             </div>
                         </div>
 
                         <div class="player-display-right">
                             <div class="current-bid-section">
                                 <div class="bid-header">CURRENT BID</div>
-                                <div
-                                    class="bid-display-amount"
-                                    id="displayBidAmount"
-                                >
-                                    ₹<%= (auctionState.currentBid ||
-                                    currentPlayer.basePrice).toLocaleString('en-IN')
-                                    %>
+                                <div class="bid-display-amount" id="displayBidAmount">
+                                    ₹<%= (auctionState.currentBid || currentPlayer.basePrice).toLocaleString('en-IN') %>
                                 </div>
-                                <div
-                                    class="bid-display-team"
-                                    id="displayBiddingTeam"
+                                <div class="bid-display-team" id="displayBiddingTeam" <% if (currentBidder) { %>style="color: <%= currentBidder.color %>"<% } %>>
                                     <% if (currentBidder) { %>
-                                    style="color: <%= currentBidder.color %>"
-                                    <% } %>> <% if (currentBidder) { %> <% if
-                                    (currentBidder.logo) { %>
-                                    <img
-                                        src="<%= currentBidder.logo %>"
-                                        alt="<%= currentBidder.teamName %>"
-                                        style="
-                                            width: 45px;
-                                            height: 45px;
-                                            object-fit: contain;
-                                            filter: drop-shadow(
-                                                2px 2px 4px rgba(0, 0, 0, 0.3)
-                                            );
-                                            margin-right: 10px;
-                                        "
-                                    />
-                                    <% } %> <%= currentBidder.teamName %> <% }
-                                    else { %> Waiting for bids... <% } %>
+                                        <% if (currentBidder.logo) { %>
+                                        <img
+                                            src="<%= currentBidder.logo %>"
+                                            alt="<%= currentBidder.teamName %>"
+                                            style="width: 45px; height: 45px; object-fit: contain; filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3)); margin-right: 10px;"
+                                        />
+                                        <% } %>
+                                        <%= currentBidder.teamName %>
+                                    <% } else { %>
+                                        Waiting for bids...
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
@@ -120,7 +96,7 @@
                     <% } else { %>
                     <div class="no-auction">
                         <div class="no-auction-content">
-                            <h2>AUCTION STARTING SOON</h2>
+                            <h2>BIDDING STARTING SOON</h2>
                             <p>Please wait for the auction to begin</p>
                         </div>
                     </div>
@@ -129,54 +105,31 @@
 
                 <!-- Teams Grid Section -->
                 <section class="teams-display-section">
-                    <div class="teams-display-grid" id="teamsDisplayGrid">
+                    <div class="teams-grid" id="teamsDisplayGrid">
                         <% teams.forEach(team => { %>
-                        <div
-                            class="team-display-card"
-                            data-team-id="<%= team._id %>"
-                            style="border-top: 4px solid <%= team.color %>"
-                        >
-                            <div
-                                class="team-display-header"
-                                style="background: <%= team.color %>"
-                            >
+                        <div class="team-card" data-team-id="<%= team._id %>" style="--tc: <%= team.color %>">
+                            <div class="team-card__accent"></div>
+                            <div class="team-card__header">
                                 <% if (team.logo) { %>
-                                <img
-                                    src="<%= team.logo %>"
-                                    alt="<%= team.teamName %>"
-                                    class="team-logo-display"
-                                />
+                                <img src="<%= team.logo %>" alt="<%= team.teamName %>" class="team-card__logo" />
                                 <% } %>
-                                <h3><%= team.teamName %></h3>
+                                <h3 class="team-card__name"><%= team.teamName %></h3>
                             </div>
-                            <div class="team-display-body">
-                                <div class="team-display-row">
-                                    <span class="label">Players</span>
-                                    <span class="value players-count">
-                                        <%= team.playersCount %>/11
-                                    </span>
+                            <div class="team-card__stats">
+                                <div class="team-card__stat">
+                                    <span class="team-card__stat-val players-count"><%= team.playersCount %>/9</span>
+                                    <span class="team-card__stat-lbl">Players</span>
                                 </div>
-                                <div class="team-display-progress">
-                                    <div class="progress-bar-display">
-                                        <div
-                                            class="progress-fill-display"
-                                            style="
-                                                width: <%=
-                                                    (team.playersCount / 11) *
-                                                    100 %>%;
-                                                background: <%= team.color %>;
-                                            "
-                                        ></div>
-                                    </div>
+                                <div class="team-card__stat">
+                                    <span class="team-card__stat-val purse-value">₹<%= team.remainingPurse.toLocaleString('en-IN') %></span>
+                                    <span class="team-card__stat-lbl">Purse Left</span>
                                 </div>
-                                <div class="team-display-row">
-                                    <span class="label">Purse</span>
-                                    <span class="value purse-value">
-                                        ₹<%=
-                                        team.remainingPurse.toLocaleString('en-IN')
-                                        %>
-                                    </span>
+                            </div>
+                            <div class="team-card__progress">
+                                <div class="team-card__progress-bar">
+                                    <div class="team-card__progress-fill" style="width: <%= (team.playersCount / 9) * 100 %>%"></div>
                                 </div>
+                                <div class="team-card__progress-text"><%= team.playersCount %>/9 Players</div>
                             </div>
                         </div>
                         <% }) %>
@@ -185,31 +138,33 @@
             </main>
         </div>
 
-        <!-- Sold Overlay -->
-        <div
-            id="soldOverlay"
-            class="sold-overlay-display"
-            style="display: none"
-        >
-            <div class="sold-content-display">
-                <h1 class="sold-text">SOLD!</h1>
-                <div class="sold-details-display">
-                    <p class="sold-player-name" id="soldPlayerName"></p>
-                    <p class="sold-team-name" id="soldTeamName"></p>
-                    <p class="sold-price-display" id="soldPrice"></p>
+        <!-- Crackers / Confetti Canvas -->
+        <canvas id="crackersCanvas"></canvas>
+
+        <!-- SOLD Overlay -->
+        <div id="soldOverlay" class="result-overlay result-overlay--sold" style="display: none">
+            <div class="result-overlay__backdrop"></div>
+            <div class="result-overlay__content">
+                <div class="result-overlay__badge result-overlay__badge--sold">SOLD!</div>
+                <div class="result-overlay__player-photo-wrap" id="soldPlayerPhoto"></div>
+                <div class="result-overlay__player" id="soldPlayerName"></div>
+                <div class="result-overlay__divider"></div>
+                <div class="result-overlay__team-row" id="soldTeamRow">
+                    <img class="result-overlay__team-logo" id="soldTeamLogo" src="" alt="" />
+                    <span class="result-overlay__team-name" id="soldTeamName"></span>
                 </div>
+                <div class="result-overlay__price" id="soldPrice"></div>
             </div>
         </div>
 
-        <!-- Unsold Overlay -->
-        <div
-            id="unsoldOverlay"
-            class="unsold-overlay-display"
-            style="display: none"
-        >
-            <div class="unsold-content-display">
-                <h1 class="unsold-text">UNSOLD</h1>
-                <p class="unsold-player-name" id="unsoldPlayerName"></p>
+        <!-- UNSOLD Overlay -->
+        <div id="unsoldOverlay" class="result-overlay result-overlay--unsold" style="display: none">
+            <div class="result-overlay__backdrop"></div>
+            <div class="result-overlay__content">
+                <div class="result-overlay__badge result-overlay__badge--unsold">UNSOLD</div>
+                <div class="result-overlay__player-photo-wrap" id="unsoldPlayerPhoto"></div>
+                <div class="result-overlay__player" id="unsoldPlayerName"></div>
+                <p class="result-overlay__subtitle" id="unsoldSubtitle"></p>
             </div>
         </div>
 

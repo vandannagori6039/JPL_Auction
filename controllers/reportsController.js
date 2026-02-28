@@ -158,9 +158,9 @@ async function exportTeamSheetsExcel(req, res) {
             worksheet.getCell('A3').value = 'Captain:';
             worksheet.getCell('B3').value = team.captain || 'Not Assigned';
             worksheet.getCell('A4').value = 'Players:';
-            worksheet.getCell('B4').value = `${team.playersCount}/11`;
+            worksheet.getCell('B4').value = `${team.playersCount}/9`;
             worksheet.getCell('A5').value = 'Total Spent:';
-            worksheet.getCell('B5').value = `₹${(100000 - team.remainingPurse).toLocaleString('en-IN')}`;
+            worksheet.getCell('B5').value = `₹${(team.initialPurse - team.remainingPurse).toLocaleString('en-IN')}`;
             worksheet.getCell('A6').value = 'Remaining:';
             worksheet.getCell('B6').value = `₹${team.remainingPurse.toLocaleString('en-IN')}`;
             
@@ -214,10 +214,10 @@ async function exportTeamSheetsExcel(req, res) {
         summarySheet.getRow(1).font = { bold: true };
         
         teams.forEach(team => {
-            const spent = 100000 - team.remainingPurse;
+            const spent = team.initialPurse - team.remainingPurse;
             summarySheet.addRow({
                 team: team.teamName,
-                players: `${team.playersCount}/11`,
+                players: `${team.playersCount}/9`,
                 spent: spent,
                 remaining: team.remainingPurse,
                 avg: team.playersCount > 0 ? Math.round(spent / team.playersCount) : 0
@@ -309,8 +309,8 @@ async function generateTeamPDF(req, res) {
         // Team details
         doc.fontSize(12).fillColor('black').font('Helvetica');
         doc.text(`Captain: ${team.captain || 'Not Assigned'}`);
-        doc.text(`Squad Strength: ${team.playersCount}/11`);
-        doc.text(`Total Spent: ₹${(100000 - team.remainingPurse).toLocaleString('en-IN')}`);
+        doc.text(`Squad Strength: ${team.playersCount}/9`);
+        doc.text(`Total Spent: ₹${(team.initialPurse - team.remainingPurse).toLocaleString('en-IN')}`);
         doc.text(`Remaining Purse: ₹${team.remainingPurse.toLocaleString('en-IN')}`);
         doc.moveDown(1);
         

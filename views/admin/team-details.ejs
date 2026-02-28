@@ -18,19 +18,19 @@
     <!-- Team Statistics -->
     <div class="stats-grid">
         <div class="stat-box">
-            <h3><%= team.playersCount %>/11</h3>
+            <h3><%= team.playersCount %>/9</h3>
             <p>Squad Strength</p>
             <small><%= 11 - team.playersCount %> slots remaining</small>
         </div>
         <div class="stat-box">
             <h3>₹<%= team.remainingPurse.toLocaleString('en-IN') %></h3>
             <p>Remaining Purse</p>
-            <small><%= ((team.remainingPurse / 100000) * 100).toFixed(1) %>% left</small>
+            <small><%= ((team.remainingPurse / team.initialPurse) * 100).toFixed(1) %>% left</small>
         </div>
         <div class="stat-box">
             <h3>₹<%= totalSpent.toLocaleString('en-IN') %></h3>
             <p>Total Spent</p>
-            <small><%= ((totalSpent / 100000) * 100).toFixed(1) %>% used</small>
+            <small><%= ((totalSpent / team.initialPurse) * 100).toFixed(1) %>% used</small>
         </div>
         <div class="stat-box">
             <h3>₹<%= maxBidAllowed.toLocaleString('en-IN') %></h3>

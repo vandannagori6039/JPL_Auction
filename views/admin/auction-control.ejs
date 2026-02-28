@@ -1,30 +1,6 @@
 <%- include('../partials/header', {title: 'Auction Control', showNav: true}) %>
 
 <div class="auction-control-container">
-    
-    <!-- Top Bar with Quick Stats -->
-    <div class="auction-top-bar">
-        <div class="quick-stats">
-            <div class="stat-item">
-                <span class="stat-label">Round:</span>
-                <span class="stat-value" id="roundNumber"><%= auctionState.roundNumber || 0 %></span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Sold:</span>
-                <span class="stat-value stat-success" id="soldCount"><%= soldCount %></span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Remaining:</span>
-                <span class="stat-value stat-warning" id="unsoldCount"><%= unsoldCount %></span>
-            </div>
-        </div>
-        
-        <div class="auction-controls-top">
-            <button class="btn btn-danger" id="undoBtn" onclick="undoLastSale()">
-                ↩️ Undo Last
-            </button>
-        </div>
-    </div>
 
     <!-- Main Auction Area -->
     <div class="auction-main-area">
@@ -158,7 +134,8 @@
             <!-- Team Bidding Grid -->
             <div class="teams-bidding-grid" id="teamsBiddingGrid">
                 <% teams.forEach(team => { %>
-                    <div class="team-bid-card" data-team-id="<%= team._id %>" style="border-left: 4px solid <%= team.color %>">
+                    <% const isSquadFull = team.playersCount >= 9; %>
+                    <div class="team-bid-card<%= isSquadFull ? ' team-blocked' : '' %>" data-team-id="<%= team._id %>" style="border-left: 4px solid <%= team.color %>">
                         <div class="team-header">
                             <% if (team.logo) { %>
                                 <img src="<%= team.logo %>" alt="<%= team.teamName %>" class="team-logo-auction" style="width: 40px; height: 40px; object-fit: contain; margin-right: 8px;">
@@ -175,11 +152,12 @@
                             </div>
                             <div class="info-line">
                                 <span>Players:</span>
-                                <span class="players-count"><%= team.playersCount %>/11</span>
+                                <span class="players-count"><%= team.playersCount %>/9</span>
                             </div>
                             <div class="info-line">
                                 <span>Max Bid:</span>
-                                <span class="max-bid" data-max-bid="<%= team.maxBidAllowed %>">
+                                <span class="max-bid" data-max-bid="<%= team.maxBidAllowed %>"
+                                      style="color: <%= team.maxBidAllowed <= 0 ? 'var(--danger)' : 'var(--primary)' %>">
                                     ₹<%= team.maxBidAllowed.toLocaleString('en-IN') %>
                                 </span>
                             </div>
@@ -188,43 +166,50 @@
                         <div class="bid-options">
                             <button 
                                 class="btn-bid btn-bid-quick" 
-                                onclick="placeBid('<%= team._id %>', 200)"
+                                onclick="placeBid('<%= team._id %>')"
                                 data-team-id="<%= team._id %>"
-                                <%= team.playersCount >= 11 || !currentPlayer ? 'disabled' : '' %>
+                                <%= isSquadFull || !currentPlayer ? 'disabled' : '' %>
                             >
-                                +200
-                            </button>
-                            <button 
-                                class="btn-bid btn-bid-quick" 
-                                onclick="placeBid('<%= team._id %>', 500)"
-                                data-team-id="<%= team._id %>"
-                                <%= team.playersCount >= 11 || !currentPlayer ? 'disabled' : '' %>
-                            >
-                                +500
-                            </button>
-                            <button 
-                                class="btn-bid btn-bid-quick" 
-                                onclick="placeBid('<%= team._id %>', 1000)"
-                                data-team-id="<%= team._id %>"
-                                <%= team.playersCount >= 11 || !currentPlayer ? 'disabled' : '' %>
-                            >
-                                +1000
+                                BID
                             </button>
                             <button 
                                 class="btn-bid btn-bid-custom" 
                                 onclick="openCustomBidModal('<%= team._id %>', '<%= team.teamName %>')"
                                 data-team-id="<%= team._id %>"
-                                <%= team.playersCount >= 11 || !currentPlayer ? 'disabled' : '' %>
+                                <%= isSquadFull || !currentPlayer ? 'disabled' : '' %>
                             >
                                 Custom
                             </button>
                         </div>
+                        
+                        <% if (isSquadFull) { %>
+                            <div class="bid-cap-indicator cap-full" style="display: block;">SQUAD FULL</div>
+                        <% } %>
                     </div>
                 <% }) %>
             </div>
 
-            <!-- Main Action Buttons -->
-            <div class="main-actions">
+        </div>
+
+        <!-- Right Sidebar: Action Buttons & Recent Sales -->
+        <div class="auction-sidebar-right">
+            <!-- Quick Stats -->
+            <div class="sidebar-stats">
+                <div class="sidebar-stat-item">
+                    <span class="stat-label">Round</span>
+                    <span class="stat-value" id="roundNumber"><%= auctionState.roundNumber || 0 %></span>
+                </div>
+                <div class="sidebar-stat-item">
+                    <span class="stat-label">Sold</span>
+                    <span class="stat-value stat-success" id="soldCount"><%= soldCount %></span>
+                </div>
+                <div class="sidebar-stat-item">
+                    <span class="stat-label">Left</span>
+                    <span class="stat-value stat-warning" id="unsoldCount"><%= unsoldCount %></span>
+                </div>
+            </div>
+
+            <div class="sidebar-section sidebar-actions">
                 <button 
                     class="btn btn-success btn-large" 
                     id="soldBtn" 
@@ -241,27 +226,12 @@
                 >
                     ✗ UNSOLD
                 </button>
-            </div>
-        </div>
-
-        <!-- Right Sidebar: Quick Actions & Recent Sales -->
-        <div class="auction-sidebar-right">
-            <div class="sidebar-section">
-                <h3>Quick Actions</h3>
-                <div class="quick-actions-list">
-                    <button class="action-btn" onclick="viewAllPlayers()">
-                        📋 View All Players
-                    </button>
-                    <button class="action-btn" onclick="viewTeams()">
-                        🏆 View Teams
-                    </button>
-                    <button class="action-btn" onclick="openDisplayWindow()">
-                        📺 Open Public Display
-                    </button>
-                    <button class="action-btn" onclick="refreshStats()">
-                        🔄 Refresh Stats
-                    </button>
-                </div>
+                <button class="btn btn-secondary btn-undo" id="undoBtn" onclick="undoLastSale()">
+                    ↩️ Undo Last Sale
+                </button>
+                <button class="btn btn-secondary btn-undo" id="shortcutsBtn" onclick="displayShortcutsModal()">
+                    ⌨️ Shortcuts
+                </button>
             </div>
 
             <div class="sidebar-section">
@@ -321,9 +291,10 @@
         <h3>Custom Bid Amount</h3>
         <p>Team: <strong id="customBidTeamName"></strong></p>
         <p>Current Bid: <strong id="customBidCurrentAmount"></strong></p>
+        <p id="customBidMinHint" style="color: var(--warning); font-size: 0.9em;"></p>
         <div class="form-group">
             <label for="customBidInput">Enter Bid Amount:</label>
-            <input type="number" id="customBidInput" class="form-control" placeholder="Enter amount" step="100" min="0">
+            <input type="number" id="customBidInput" class="form-control" placeholder="Enter amount" step="1000" min="0">
         </div>
         <div class="modal-actions">
             <button class="btn btn-primary" onclick="submitCustomBid()">Place Bid</button>
@@ -336,6 +307,7 @@
 // Global variables
 let currentCategory = 'all';
 let currentPlayerId = '<%= currentPlayer ? currentPlayer._id : "" %>';
+let currentPlayerCategory = '<%= currentPlayer ? currentPlayer.category : "" %>';
 let currentAuctionState = <%- JSON.stringify(auctionState) %>;
 let teams = <%- JSON.stringify(teams) %>;
 </script>

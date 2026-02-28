@@ -4,10 +4,9 @@ import Player from './models/Player.js';
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/jpl-auction';
 
 const CATEGORY_BASE_PRICE = {
-	A: 10000,
-	B: 5000,
-	C: 2000,
-	D: 1000,
+	A: 75000,
+	B: 30000,
+	C: 10000,
 };
 
 async function fixPlayers() {

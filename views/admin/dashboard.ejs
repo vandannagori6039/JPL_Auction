@@ -69,9 +69,9 @@
                     <div class="team-card" style="border-left: 4px solid <%= team.color %>">
                         <h3><%= team.teamName %></h3>
                         <div class="team-stats">
-                            <p><strong>Players:</strong> <%= team.playersCount %>/11</p>
+                            <p><strong>Players:</strong> <%= team.playersCount %>/9</p>
                             <p><strong>Remaining:</strong> ₹<%= team.remainingPurse.toLocaleString('en-IN') %></p>
-                            <p><strong>Spent:</strong> ₹<%= (100000 - team.remainingPurse).toLocaleString('en-IN') %></p>
+                            <p><strong>Spent:</strong> ₹<%= (team.initialPurse - team.remainingPurse).toLocaleString('en-IN') %></p>
                         </div>
                         <a href="/admin/teams/<%= team._id %>" class="btn btn-sm">View Details</a>
                     </div>

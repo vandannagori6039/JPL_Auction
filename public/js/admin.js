@@ -2,24 +2,160 @@
 
 // Initialize Socket.IO connection (only if socket.io is available)
 let socket = null;
+let reconnectAttempts = 0;
+let keepAliveInterval = null;
 
 if (typeof io !== 'undefined') {
-    socket = io();
+    // Socket.io configuration for better reconnection handling
+    socket = io({
+        timeout: 120000, // 2 minutes
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        maxReconnectionAttempts: 10,
+        forceNew: false,
+        transports: ['polling', 'websocket']
+    });
 
     socket.on('connect', () => {
         console.log('Connected to auction server');
+        reconnectAttempts = 0;
         socket.emit('join-room', 'auction-room');
+        
+        // Start keep-alive mechanism
+        startKeepAlive();
+        
+        // Request state restoration on reconnection
+        if (socket.disconnected === false && socket.connected === true) {
+            socket.emit('restore-state');
+        }
+        
+        // Hide any reconnection messages
+        hideReconnectingMessages();
+        
+        // Update connection status indicator
+        updateConnectionStatus('connected');
+        
+        if (typeof showToast === 'function') {
+            showToast('Connected to auction server', 'success');
+        }
     });
 
-    socket.on('disconnect', () => {
-        console.log('Disconnected from server');
+    socket.on('disconnect', (reason) => {
+        console.log('Disconnected from server, reason:', reason);
+        stopKeepAlive();
+        
+        // Update connection status indicator
+        updateConnectionStatus('disconnected');
+        
+        // Show appropriate message based on disconnect reason
+        if (reason === 'io server disconnect') {
+            // Server disconnected the client, try to reconnect
+            if (typeof showToast === 'function') {
+                showToast('Server disconnected. Attempting to reconnect...', 'warning');
+            }
+        } else if (reason === 'transport close' || reason === 'transport error') {
+            // Network issues
+            if (typeof showToast === 'function') {
+                showToast('Connection lost due to network issues. Reconnecting...', 'warning');
+            }
+        }
+    });
+
+    socket.on('connect_error', (error) => {
+        reconnectAttempts++;
+        console.log(`Connection attempt ${reconnectAttempts} failed:`, error);
+        
+        // Update connection status indicator
+        updateConnectionStatus('connecting');
+        
+        if (reconnectAttempts >= 5) {
+            if (typeof showToast === 'function') {
+                showToast('Connection issues detected. Please refresh the page if problems persist.', 'error');
+            }
+        }
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+        console.log('Reconnected after', attemptNumber, 'attempts');
+        updateConnectionStatus('connected');
+        
         if (typeof showToast === 'function') {
-            showToast('Connection lost. Reconnecting...', 'warning');
+            showToast('Reconnected to server', 'success');
+        }
+    });
+
+    socket.on('reconnecting', (attemptNumber) => {
+        console.log('Attempting to reconnect, attempt:', attemptNumber);
+        updateConnectionStatus('connecting');
+        
+        if (attemptNumber === 1 && typeof showToast === 'function') {
+            showToast('Reconnecting to server...', 'info');
         }
     });
 
     socket.on('connected', (data) => {
         console.log('Socket connected:', data.socketId);
+        
+        // If initial connection includes current state, restore it
+        if (data.auctionState && data.auctionState.isActive && data.auctionState.currentPlayer) {
+            if (document.getElementById('currentPlayerPanel')) {
+                updateCurrentPlayer(data.auctionState.currentPlayer, data.auctionState);
+                if (data.teamsData) {
+                    updateTeamCardsFromSocket(data.teamsData);
+                }
+            }
+        }
+    });
+
+    socket.on('state-restored', (data) => {
+        console.log('State restored from server');
+        
+        // Restore auction state if active
+        if (data.auctionState && data.auctionState.isActive && data.auctionState.currentPlayer) {
+            if (document.getElementById('currentPlayerPanel')) {
+                updateCurrentPlayer(data.auctionState.currentPlayer, data.auctionState);
+                if (data.teamsData) {
+                    updateTeamCardsFromSocket(data.teamsData);
+                }
+            }
+        }
+        
+        if (typeof showToast === 'function') {
+            showToast('Auction state synchronized', 'info');
+        }
+    });
+
+    // Keep-alive functionality
+    function startKeepAlive() {
+        stopKeepAlive(); // Clear any existing interval
+        keepAliveInterval = setInterval(() => {
+            if (socket && socket.connected) {
+                socket.emit('ping');
+            }
+        }, 25000); // Send ping every 25 seconds
+    }
+
+    function stopKeepAlive() {
+        if (keepAliveInterval) {
+            clearInterval(keepAliveInterval);
+            keepAliveInterval = null;
+        }
+    }
+
+    function hideReconnectingMessages() {
+        // Hide any reconnecting toast messages
+        const toasts = document.querySelectorAll('.toast');
+        toasts.forEach(toast => {
+            if (toast.textContent.includes('Reconnecting') || toast.textContent.includes('Connection lost')) {
+                toast.remove();
+            }
+        });
+    }
+
+    socket.on('pong', () => {
+        // Keep-alive response received
+        console.log('Keep-alive pong received');
     });
 
     // Listen for player selection from other admin sessions
@@ -42,6 +178,8 @@ if (typeof io !== 'undefined') {
             if (data.teamsData) {
                 updateTeamCardsFromSocket(data.teamsData);
             }
+            // Update bid cap indicators after every bid
+            updateBidCapIndicators();
         }
     });
 
@@ -77,7 +215,162 @@ if (typeof io !== 'undefined') {
     });
 }
 
+// ===== SESSION KEEP-ALIVE =====
+
+let sessionKeepAliveInterval = null;
+
+function startSessionKeepAlive() {
+    // Clear any existing interval
+    if (sessionKeepAliveInterval) {
+        clearInterval(sessionKeepAliveInterval);
+    }
+
+    // Keep session alive every 15 minutes
+    sessionKeepAliveInterval = setInterval(async () => {
+        try {
+            const response = await fetch('/keep-alive', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include' // Include session cookies
+            });
+
+            if (response.ok) {
+                console.log('Session keep-alive successful');
+            } else {
+                console.warn('Session keep-alive failed:', response.status);
+                // If unauthorized, the session may have expired
+                if (response.status === 401) {
+                    if (typeof showToast === 'function') {
+                        showToast('Session expired. Please login again.', 'warning');
+                    }
+                    // Redirect to login after a short delay
+                    setTimeout(() => {
+                        window.location.href = '/admin/login';
+                    }, 3000);
+                }
+            }
+        } catch (error) {
+            console.warn('Session keep-alive network error:', error);
+        }
+    }, 15 * 60 * 1000); // 15 minutes
+}
+
+// User activity tracking to reset keep-alive timer
+let lastActivityTime = Date.now();
+let activityTrackingEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+
+function trackUserActivity() {
+    lastActivityTime = Date.now();
+}
+
+// Add activity listeners
+activityTrackingEvents.forEach(event => {
+    document.addEventListener(event, trackUserActivity, true);
+});
+
+// Enhanced keep-alive that considers user activity
+function startEnhancedSessionKeepAlive() {
+    if (sessionKeepAliveInterval) {
+        clearInterval(sessionKeepAliveInterval);
+    }
+
+    sessionKeepAliveInterval = setInterval(async () => {
+        const timeSinceLastActivity = Date.now() - lastActivityTime;
+        const isRecentActivity = timeSinceLastActivity < (30 * 60 * 1000); // 30 minutes
+
+        // Always keep alive if user was active recently, or if idle time is less than 2 hours
+        const isIdleTooLong = timeSinceLastActivity > (2 * 60 * 60 * 1000); // 2 hours
+
+        if (isRecentActivity || !isIdleTooLong) {
+            try {
+                const response = await fetch('/keep-alive', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    console.log('Session keep-alive successful');
+                    showSessionIndicator();
+                } else if (response.status === 401) {
+                    console.warn('Session expired, redirecting to login');
+                    window.location.href = '/admin/login';
+                }
+            } catch (error) {
+                console.warn('Session keep-alive error:', error);
+            }
+        }
+    }, 10 * 60 * 1000); // Check every 10 minutes
+}
+
+// Start session keep-alive when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    startEnhancedSessionKeepAlive();
+    console.log('Session keep-alive started');
+    
+    // Initialize connection status indicator
+    updateConnectionStatus('connecting');
+});
+
 // ===== UTILITY FUNCTIONS =====
+
+/**
+ * Update connection status indicator
+ */
+function updateConnectionStatus(status) {
+    let indicator = document.querySelector('.connection-status');
+    
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'connection-status';
+        document.body.appendChild(indicator);
+    }
+    
+    // Remove existing status classes
+    indicator.classList.remove('connected', 'disconnected', 'connecting');
+    
+    switch(status) {
+        case 'connected':
+            indicator.classList.add('connected');
+            indicator.textContent = 'Connected';
+            break;
+        case 'disconnected':
+            indicator.classList.add('disconnected');
+            indicator.textContent = 'Disconnected';
+            break;
+        case 'connecting':
+            indicator.classList.add('connecting');
+            indicator.textContent = 'Connecting...';
+            break;
+        default:
+            indicator.textContent = 'Unknown';
+    }
+}
+
+/**
+ * Show session keep-alive indicator temporarily
+ */
+function showSessionIndicator() {
+    let indicator = document.querySelector('.session-indicator');
+    
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'session-indicator';
+        indicator.textContent = 'Session renewed';
+        document.body.appendChild(indicator);
+    }
+    
+    indicator.classList.add('show');
+    
+    // Hide after 2 seconds
+    setTimeout(() => {
+        indicator.classList.remove('show');
+    }, 2000);
+}
 
 /**
  * Format a number as Indian currency
@@ -368,6 +661,7 @@ async function placeBid(teamId, increment = null) {
         if (result.success) {
             // Don't update bid display here - let socket.io handle it to avoid duplicates
             updateTeamCards(result.teamsData);
+            updateBidCapIndicators();
             showToast(result.team.teamName + ' bid ₹' + result.newBid.toLocaleString('en-IN'), 'info');
         } else {
             showToast(result.message || 'Bid not allowed', 'warning');
@@ -477,6 +771,9 @@ async function undoLastSale() {
 function updateCurrentPlayer(player, auctionState) {
     if (typeof currentPlayerId !== 'undefined') {
         currentPlayerId = player._id;
+    }
+    if (typeof currentPlayerCategory !== 'undefined') {
+        currentPlayerCategory = player.category;
     }
     if (typeof currentAuctionState !== 'undefined') {
         currentAuctionState = auctionState;
@@ -590,10 +887,16 @@ function updateBidDisplay(newBid, team) {
 }
 
 /**
- * Update team cards with new data
+ * Update team cards with new data and enforce bid cap indicators
  */
 function updateTeamCards(teamsData) {
     if (!teamsData) return;
+    
+    // Get current bid amount
+    const currentBidEl = document.getElementById('currentBidAmount');
+    const currentBid = currentBidEl 
+        ? parseInt(currentBidEl.textContent.replace(/[₹,\s]/g, ''), 10) || 0 
+        : 0;
     
     teamsData.forEach(team => {
         const card = document.querySelector(`[data-team-id="${team._id}"]`);
@@ -608,7 +911,7 @@ function updateTeamCards(teamsData) {
             // Update players count
             const playersEl = card.querySelector('.players-count');
             if (playersEl) {
-                playersEl.textContent = team.playersCount + '/11';
+                playersEl.textContent = team.playersCount + '/9';
             }
             
             // Update max bid
@@ -616,13 +919,99 @@ function updateTeamCards(teamsData) {
             if (maxBidEl && team.maxBidAllowed !== undefined) {
                 maxBidEl.textContent = '₹' + team.maxBidAllowed.toLocaleString('en-IN');
                 maxBidEl.setAttribute('data-max-bid', team.maxBidAllowed);
+                
+                // Color-code the max bid
+                if (team.maxBidAllowed <= 0) {
+                    maxBidEl.style.color = 'var(--danger)';
+                } else if (team.maxBidAllowed <= currentBid) {
+                    maxBidEl.style.color = 'var(--warning-dark)';
+                } else {
+                    maxBidEl.style.color = 'var(--primary)';
+                }
             }
             
-            // Disable bid button if team is full
-            const bidBtn = card.querySelector('.btn-bid');
-            if (bidBtn && team.playersCount >= 11) {
-                bidBtn.disabled = true;
+            // Determine if team is blocked from bidding
+            const isSquadFull = team.playersCount >= 9;
+            const isCapReached = currentPlayerId && team.maxBidAllowed !== undefined && team.maxBidAllowed <= currentBid;
+            const isBlocked = isSquadFull || isCapReached;
+            
+            // Update bid buttons
+            const bidBtns = card.querySelectorAll('.btn-bid');
+            bidBtns.forEach(btn => {
+                btn.disabled = isBlocked || !currentPlayerId;
+            });
+            
+            // Show/hide blocked indicator
+            let blockedEl = card.querySelector('.bid-cap-indicator');
+            if (!blockedEl) {
+                blockedEl = document.createElement('div');
+                blockedEl.className = 'bid-cap-indicator';
+                card.appendChild(blockedEl);
             }
+            
+            if (isBlocked && currentPlayerId) {
+                if (isSquadFull) {
+                    blockedEl.textContent = 'SQUAD FULL';
+                    blockedEl.className = 'bid-cap-indicator cap-full';
+                } else {
+                    blockedEl.textContent = 'BID CAP REACHED';
+                    blockedEl.className = 'bid-cap-indicator cap-reached';
+                }
+                blockedEl.style.display = 'block';
+                card.classList.add('team-blocked');
+            } else {
+                blockedEl.style.display = 'none';
+                card.classList.remove('team-blocked');
+            }
+        }
+    });
+}
+
+/**
+ * Update bid cap indicators for all team cards based on current bid.
+ * Called after each bid to re-evaluate which teams are blocked.
+ */
+function updateBidCapIndicators() {
+    const currentBidEl = document.getElementById('currentBidAmount');
+    const currentBid = currentBidEl 
+        ? parseInt(currentBidEl.textContent.replace(/[₹,\s]/g, ''), 10) || 0 
+        : 0;
+    
+    document.querySelectorAll('.team-bid-card').forEach(card => {
+        const maxBidEl = card.querySelector('.max-bid');
+        const maxBid = maxBidEl ? parseInt(maxBidEl.getAttribute('data-max-bid'), 10) || 0 : Infinity;
+        const playersEl = card.querySelector('.players-count');
+        const playersCount = playersEl ? parseInt(playersEl.textContent.split('/')[0], 10) : 0;
+        
+        const isSquadFull = playersCount >= 9;
+        const isCapReached = currentPlayerId && maxBid <= currentBid;
+        const isBlocked = isSquadFull || isCapReached;
+        
+        const bidBtns = card.querySelectorAll('.btn-bid');
+        bidBtns.forEach(btn => {
+            btn.disabled = isBlocked || !currentPlayerId;
+        });
+        
+        let blockedEl = card.querySelector('.bid-cap-indicator');
+        if (!blockedEl) {
+            blockedEl = document.createElement('div');
+            blockedEl.className = 'bid-cap-indicator';
+            card.appendChild(blockedEl);
+        }
+        
+        if (isBlocked && currentPlayerId) {
+            if (isSquadFull) {
+                blockedEl.textContent = 'SQUAD FULL';
+                blockedEl.className = 'bid-cap-indicator cap-full';
+            } else {
+                blockedEl.textContent = 'BID CAP REACHED';
+                blockedEl.className = 'bid-cap-indicator cap-reached';
+            }
+            blockedEl.style.display = 'block';
+            card.classList.add('team-blocked');
+        } else {
+            blockedEl.style.display = 'none';
+            card.classList.remove('team-blocked');
         }
     });
 }
@@ -663,6 +1052,9 @@ function clearCurrentPlayer() {
     if (typeof currentPlayerId !== 'undefined') {
         currentPlayerId = '';
     }
+    if (typeof currentPlayerCategory !== 'undefined') {
+        currentPlayerCategory = '';
+    }
     
     const panel = document.getElementById('currentPlayerPanel');
     if (panel) {
@@ -694,7 +1086,7 @@ function clearCurrentPlayer() {
 }
 
 /**
- * Enable all bid buttons
+ * Enable all bid buttons (except blocked teams)
  */
 function enableBidButtons() {
     document.querySelectorAll('.btn-bid').forEach(btn => {
@@ -703,12 +1095,14 @@ function enableBidButtons() {
             const playersCountEl = teamCard.querySelector('.players-count');
             if (playersCountEl) {
                 const playersCount = parseInt(playersCountEl.textContent.split('/')[0], 10);
-                if (playersCount < 11) {
+                if (playersCount < 9 && !teamCard.classList.contains('team-blocked')) {
                     btn.disabled = false;
                 }
             }
         }
     });
+    // Also run cap check
+    updateBidCapIndicators();
 }
 
 /**
@@ -816,7 +1210,13 @@ function showSoldAnimation(player, team, price) {
  * Show unsold message
  */
 function showUnsoldMessage(player) {
-    showToast(player.name + ' - UNSOLD', 'warning', 3000);
+    let msg = player.name + ' - UNSOLD';
+    if (player.movedToC) {
+        msg += ` (moved from Cat ${player.originalCategory} → Cat C, re-queued)`;
+    } else {
+        msg += ' (re-queued at end)';
+    }
+    showToast(msg, 'warning', 4000);
 }
 
 /**
@@ -1075,6 +1475,18 @@ function hideLoading() {
 
 // ============= CUSTOM BID MODAL FUNCTIONS =============
 
+/**
+ * Get minimum bid increment based on category and current bid (mirrors server logic)
+ */
+function getMinIncrement(category, currentBid) {
+    switch (category) {
+        case 'A': return currentBid >= 200000 ? 25000 : 10000;
+        case 'B': return currentBid >= 100000 ? 10000 : 5000;
+        case 'C': return currentBid >= 50000 ? 5000 : 2000;
+        default: return 5000;
+    }
+}
+
 let customBidTeamId = null;
 
 /**
@@ -1088,6 +1500,17 @@ function openCustomBidModal(teamId, teamName) {
     const currentBidElement = document.getElementById('currentBidAmount');
     if (currentBidElement) {
         document.getElementById('customBidCurrentAmount').textContent = currentBidElement.textContent;
+    }
+    
+    // Show minimum increment hint
+    const hintEl = document.getElementById('customBidMinHint');
+    if (hintEl && typeof currentPlayerCategory !== 'undefined' && currentPlayerCategory) {
+        const currentBid = currentBidElement 
+            ? parseInt(currentBidElement.textContent.replace(/[₹,\s]/g, ''), 10) || 0 
+            : 0;
+        const minInc = getMinIncrement(currentPlayerCategory, currentBid);
+        const minBid = currentBid + minInc;
+        hintEl.textContent = `Min bid: ₹${minBid.toLocaleString('en-IN')} (min increment: ₹${minInc.toLocaleString('en-IN')} for Cat ${currentPlayerCategory})`;
     }
     
     // Clear and focus input
@@ -1279,16 +1702,7 @@ function navigatePlayers(direction) {
  * Add keyboard shortcuts help button to auction control
  */
 function showKeyboardShortcutsHelp() {
-    // Add shortcuts help button to auction control
-    const topBar = document.querySelector('.auction-controls-top');
-    if (topBar && !document.getElementById('shortcutsBtn')) {
-        const btn = document.createElement('button');
-        btn.id = 'shortcutsBtn';
-        btn.className = 'btn btn-secondary';
-        btn.innerHTML = '⌨️ Shortcuts';
-        btn.onclick = displayShortcutsModal;
-        topBar.appendChild(btn);
-    }
+    // Shortcuts button is now in the sidebar template, no dynamic insertion needed
 }
 
 /**

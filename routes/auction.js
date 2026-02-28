@@ -11,6 +11,7 @@ import {
 	getAllUnsoldPlayers,
 } from '../controllers/auctionController.js';
 import { isAuthenticated } from '../middleware/auth.js';
+import { getUnsoldPoolCounts, calculateMaxBidWithContext } from '../utils/helpers.js';
 
 const router = express.Router();
 
@@ -173,6 +174,52 @@ router.get('/api/unsold-players', isAuthenticated, async (req, res) => {
 		res.json(players);
 	} catch (error) {
 		console.error('Error in get-unsold-players:', error);
+		res.status(500).json({ success: false, message: error.message });
+	}
+});
+
+// Get real-time bid cap info for all teams (purse protection data)
+router.get('/api/bid-cap-info', isAuthenticated, async (req, res) => {
+	try {
+		const AuctionState = (await import('../models/AuctionState.js')).default;
+		const Team = (await import('../models/Team.js')).default;
+
+		const auctionState = await AuctionState.findOne().lean();
+		const currentPlayerId = auctionState?.currentPlayer || null;
+
+		const unsoldCounts = await getUnsoldPoolCounts(currentPlayerId);
+		const teams = await Team.find().sort('teamNumber').lean();
+
+		const PLAYERS_TO_BUY = 9;
+		const totalRemainingSlots = teams.reduce(
+			(sum, t) => sum + Math.max(PLAYERS_TO_BUY - (t.playersCount ?? 0), 0),
+			0,
+		);
+
+		const teamCaps = teams.map((t) => ({
+			teamId: t._id,
+			teamName: t.teamName,
+			remainingPurse: t.remainingPurse,
+			playersCount: t.playersCount,
+			remainingSlots: Math.max(PLAYERS_TO_BUY - (t.playersCount ?? 0), 0),
+			maxBidAllowed: calculateMaxBidWithContext(
+				t._id,
+				t.remainingPurse,
+				t.playersCount ?? 0,
+				unsoldCounts,
+				teams,
+			),
+		}));
+
+		res.json({
+			success: true,
+			unsoldPool: unsoldCounts,
+			totalRemainingSlots,
+			currentBid: auctionState?.currentBid || 0,
+			teamCaps,
+		});
+	} catch (error) {
+		console.error('Error in bid-cap-info:', error);
 		res.status(500).json({ success: false, message: error.message });
 	}
 });

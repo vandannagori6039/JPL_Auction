@@ -21,7 +21,7 @@ async function resetAuctionKeepPlayersTeams() {
             {},
             {
                 $set: {
-                    remainingPurse: 100000,
+                    remainingPurse: 1000000,
                     playersCount: 0,
                     players: []
                 }
@@ -60,7 +60,7 @@ async function resetEntireAuction() {
             {},
             {
                 $set: {
-                    remainingPurse: 100000,
+                    remainingPurse: 1000000,
                     playersCount: 0,
                     players: []
                 }
@@ -78,7 +78,7 @@ async function resetEntireAuction() {
 
 // Get auction progress
 async function getAuctionProgress() {
-    const total = 88;
+    const total = await Player.countDocuments();
     const sold = await Player.countDocuments({ status: 'sold' });
     const unsold = await Player.countDocuments({ status: 'unsold' });
     const withdrawn = await Player.countDocuments({ status: 'withdrawn' });
@@ -96,11 +96,11 @@ async function getAuctionProgress() {
 async function validateAuctionIntegrity() {
     const issues = [];
     
-    // Check if any team has more than 11 players
+    // Check if any team has more than 9 purchased players
     const teams = await Team.find();
     teams.forEach(team => {
-        if (team.playersCount > 11) {
-            issues.push(`${team.teamName} has more than 11 players`);
+        if (team.playersCount > 9) {
+            issues.push(`${team.teamName} has more than 9 purchased players`);
         }
     });
     
@@ -115,7 +115,7 @@ async function validateAuctionIntegrity() {
     // Check purse calculations
     for (const team of teams) {
         const totalSpent = team.players.reduce((sum, p) => sum + p.pricePaid, 0);
-        const expectedRemaining = 100000 - totalSpent;
+        const expectedRemaining = 1000000 - totalSpent;
         if (Math.abs(team.remainingPurse - expectedRemaining) > 1) {
             issues.push(`${team.teamName} purse mismatch. Expected: ${expectedRemaining}, Got: ${team.remainingPurse}`);
         }
@@ -135,7 +135,7 @@ async function recalculateTeamStats(teamId = null) {
         
         for (const team of teams) {
             const totalSpent = team.players.reduce((sum, p) => sum + p.pricePaid, 0);
-            team.remainingPurse = 100000 - totalSpent;
+            team.remainingPurse = 1000000 - totalSpent;
             team.playersCount = team.players.length;
             await team.save();
         }

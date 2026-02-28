@@ -1902,33 +1902,32 @@ a:hover {
     overflow: hidden;
 }
 
-.auction-top-bar {
-    background: var(--gray-800);
+/* Sidebar Stats */
+.sidebar-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 0.75rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius-lg);
     color: white;
-    padding: 1rem 2rem;
+}
+
+.sidebar-stat-item {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    box-shadow: var(--shadow-md);
+    gap: 0.15rem;
 }
 
-.quick-stats {
-    display: flex;
-    gap: 2rem;
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.stat-label {
+.sidebar-stat-item .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     opacity: 0.8;
 }
 
-.stat-value {
-    font-size: 1.5rem;
+.sidebar-stat-item .stat-value {
+    font-size: 1.3rem;
     font-weight: bold;
 }
 
@@ -1940,9 +1939,14 @@ a:hover {
     color: var(--warning);
 }
 
-.auction-controls-top {
-    display: flex;
-    gap: 1rem;
+/* Undo Button in sidebar */
+.btn-undo {
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    border-radius: var(--radius-md);
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .auction-main-area {
@@ -2230,6 +2234,48 @@ a:hover {
     cursor: not-allowed;
 }
 
+/* ===== BID CAP / PURSE PROTECTION INDICATORS ===== */
+
+.bid-cap-indicator {
+    display: none;
+    text-align: center;
+    padding: 0.4rem 0.6rem;
+    margin-top: 0.5rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    animation: capPulse 1.5s ease-in-out infinite;
+}
+
+.bid-cap-indicator.cap-reached {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.bid-cap-indicator.cap-full {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+    border: 1px solid #ef4444;
+}
+
+.team-bid-card.team-blocked {
+    opacity: 0.7;
+    filter: grayscale(30%);
+    position: relative;
+}
+
+.team-bid-card.team-blocked .bid-options {
+    pointer-events: none;
+}
+
+@keyframes capPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
 /* Custom Bid Modal */
 #customBidModal {
     display: none;
@@ -2298,17 +2344,16 @@ a:hover {
 }
 
 
-/* Main Action Buttons */
-.main-actions {
+/* Action Buttons in Right Sidebar */
+.sidebar-actions {
     display: flex;
-    gap: 2rem;
-    justify-content: center;
-    margin-top: 1rem;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .btn-large {
-    padding: 1.5rem 4rem;
-    font-size: 1.5rem;
+    padding: 1.25rem 2rem;
+    font-size: 1.4rem;
     font-weight: bold;
     border-radius: var(--radius-xl);
     border: none;
@@ -2316,6 +2361,7 @@ a:hover {
     transition: all 0.3s;
     text-transform: uppercase;
     letter-spacing: 2px;
+    width: 100%;
 }
 
 .btn-large:hover:not(:disabled) {
@@ -2335,27 +2381,6 @@ a:hover {
     padding: 1rem;
     overflow-y: auto;
     box-shadow: var(--shadow-md);
-}
-
-.quick-actions-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.action-btn {
-    padding: 0.75rem;
-    background: var(--gray-100);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-}
-
-.action-btn:hover {
-    background: var(--gray-200);
-    transform: translateX(5px);
 }
 
 .bid-history, .recent-sales {
@@ -2637,35 +2662,19 @@ a:hover {
         grid-template-columns: repeat(2, 1fr);
     }
     
-    .main-actions {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
     .btn-large {
-        padding: 1rem 2rem;
-        font-size: 1.2rem;
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
     }
 }
 
 @media (max-width: 768px) {
-    .auction-top-bar {
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
+    .sidebar-stats {
+        padding: 0.5rem;
     }
     
-    .quick-stats {
-        gap: 1rem;
-    }
-    
-    .stat-value {
-        font-size: 1.2rem;
-    }
-    
-    .auction-controls-top {
-        flex-wrap: wrap;
-        justify-content: center;
+    .sidebar-stat-item .stat-value {
+        font-size: 1rem;
     }
     
     .teams-bidding-grid {
@@ -3486,4 +3495,106 @@ textarea:focus-visible {
         font-size: 0.8rem;
         padding: 0.4rem 0.5rem;
     }
+}
+
+/* ============= CONNECTION STATUS INDICATOR ============= */
+
+.connection-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    z-index: 9998;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.connection-status.connected {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-dark);
+    border-color: var(--success);
+}
+
+.connection-status.disconnected {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-dark);
+    border-color: var(--danger);
+}
+
+.connection-status.connecting {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-dark);
+    border-color: var(--warning);
+}
+
+.connection-status::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+.connection-status.connected::before {
+    background-color: var(--success);
+}
+
+.connection-status.disconnected::before {
+    background-color: var(--danger);
+}
+
+.connection-status.connecting::before {
+    background-color: var(--warning);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ============= SESSION KEEP-ALIVE INDICATOR ============= */
+
+.session-indicator {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    z-index: 9997;
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.session-indicator.show {
+    opacity: 1;
+}
+
+.session-indicator::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    background-color: var(--success);
+    animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
 }

@@ -169,7 +169,7 @@ export const getTeamDetails = async (req, res) => {
     }
     
     // Recommended budget per remaining player
-    const remainingSlots = 11 - team.playersCount;
+    const remainingSlots = 9 - team.playersCount;
     const recommendedBudget = remainingSlots > 0 
       ? Math.floor(team.remainingPurse / remainingSlots)
       : 0;
@@ -260,7 +260,7 @@ export const resetTeam = async (req, res) => {
     );
     
     // Reset team
-    team.remainingPurse = 100000;
+    team.remainingPurse = team.initialPurse;
     team.playersCount = 0;
     team.players = [];
     await team.save();
@@ -285,7 +285,7 @@ export const calculateMaxBidForTeam = async (req, res) => {
     }
     
     const maxBid = calculateMaxBidDirect(team.remainingPurse, team.playersCount);
-    const playersNeeded = 11 - team.playersCount;
+    const playersNeeded = 9 - team.playersCount;
     
     res.json({ 
       maxBid, 

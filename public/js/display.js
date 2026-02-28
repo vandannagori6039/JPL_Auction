@@ -1,511 +1,557 @@
-// ============= SOCKET.IO CONNECTION =============
+// ═══════════════════════════════════════════════════════════════
+//  JPL Auction — Live Display  (Socket.IO + Beautiful Animations)
+// ═══════════════════════════════════════════════════════════════
 
-const socket = io();
-
-socket.on("connect", () => {
-    console.log("Display connected to server");
-    socket.emit("join-room", "auction-room");
-    updateConnectionStatus(true);
+// Socket.io configuration for better reconnection handling
+const socket = io({
+    timeout: 120000, // 2 minutes
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    maxReconnectionAttempts: 10,
+    forceNew: false,
+    transports: ['polling', 'websocket']
 });
 
-socket.on("disconnect", () => {
-    console.log("Display disconnected");
-    updateConnectionStatus(false);
+let reconnectAttempts = 0;
+let keepAliveInterval = null;
+
+// ─── Connection ───
+socket.on("connect", () => {
+    console.log("Display connected:", socket.id);
+    socket.emit("join-room", "auction-room");
+    setConnectionStatus(true);
+    reconnectAttempts = 0;
+    
+    // Start keep-alive mechanism
+    startKeepAlive();
+    
+    // Request state restoration on reconnection
+    socket.emit('restore-state');
+});
+
+socket.on("disconnect", (reason) => {
+    console.log("Display disconnected, reason:", reason);
+    setConnectionStatus(false);
+    stopKeepAlive();
+});
+
+socket.on('connect_error', (error) => {
+    reconnectAttempts++;
+    console.log(`Display connection attempt ${reconnectAttempts} failed:`, error);
+});
+
+socket.on('reconnect', (attemptNumber) => {
+    console.log('Display reconnected after', attemptNumber, 'attempts');
+    setConnectionStatus(true);
+});
+
+socket.on('reconnecting', (attemptNumber) => {
+    console.log('Display attempting to reconnect, attempt:', attemptNumber);
 });
 
 socket.on("connected", (data) => {
-    console.log("Socket confirmed:", data.socketId);
-});
-
-// ============= SOCKET EVENT LISTENERS =============
-
-// Listen for player selection
-socket.on("player-selected", (data) => {
-    console.log("Player selected:", data.player.name);
-    displayNewPlayer(data.player, data.auctionState);
-    if (data.teams) {
-        updateTeamsDisplay(data.teams);
+    console.log("Confirmed:", data.socketId);
+    
+    // If initial connection includes current state, restore it
+    if (data.auctionState && data.auctionState.isActive && data.auctionState.currentPlayer) {
+        displayNewPlayer(data.auctionState.currentPlayer, data.auctionState);
+        if (data.teamsData) updateTeamsDisplay(data.teamsData);
     }
 });
 
-// Listen for bid updates
-socket.on("bid-placed", (data) => {
-    console.log("Bid placed:", data.newBid, "by", data.team.teamName);
-    updateBidAmount(data.newBid, data.team);
-    if (data.teamsData) {
-        updateTeamsDisplay(data.teamsData);
+socket.on('state-restored', (data) => {
+    console.log('Display state restored from server');
+    
+    // Restore auction state if active
+    if (data.auctionState && data.auctionState.isActive && data.auctionState.currentPlayer) {
+        displayNewPlayer(data.auctionState.currentPlayer, data.auctionState);
+        if (data.teamsData) updateTeamsDisplay(data.teamsData);
     }
-    highlightBiddingTeam(data.team._id);
-    createBidParticles();
 });
 
-// Listen for player sold
-socket.on("player-sold", (data) => {
-    console.log("Player sold:", data.player.name, "to", data.team.teamName);
-    showSoldOverlay(data.player, data.team, data.price);
-    createConfetti();
-
-    setTimeout(() => {
-        hideSoldOverlay();
-        if (data.teamsData) {
-            updateTeamsDisplay(data.teamsData);
+// Keep-alive functionality
+function startKeepAlive() {
+    stopKeepAlive(); // Clear any existing interval
+    keepAliveInterval = setInterval(() => {
+        if (socket && socket.connected) {
+            socket.emit('ping');
         }
-        clearPlayerDisplay();
-        updateRound(data.roundNumber || 0);
-        updateSoldCount();
-    }, 4000);
-});
+    }, 25000); // Send ping every 25 seconds
+}
 
-// Listen for player unsold
-socket.on("player-unsold", (data) => {
-    console.log("Player unsold:", data.player.name);
-    showUnsoldOverlay(data.player);
-
-    setTimeout(() => {
-        hideUnsoldOverlay();
-        clearPlayerDisplay();
-    }, 3000);
-});
-
-// Listen for sale undone
-socket.on("sale-undone", (data) => {
-    console.log("Sale undone:", data.player.name);
-    if (data.teamsData) {
-        updateTeamsDisplay(data.teamsData);
-    }
-    updateSoldCount();
-});
-
-// Listen for player withdrawn
-socket.on("player-withdrawn", (data) => {
-    console.log("Player withdrawn:", data.player.name);
-    clearPlayerDisplay();
-});
-
-// ============= DISPLAY UPDATE FUNCTIONS =============
-
-/**
- * Update connection status indicator
- */
-function updateConnectionStatus(connected) {
-    const statusEl = document.getElementById("connectionStatus");
-    if (statusEl) {
-        if (connected) {
-            statusEl.textContent = "🟢 Live";
-            statusEl.classList.remove("disconnected");
-        } else {
-            statusEl.textContent = "🔴 Reconnecting...";
-            statusEl.classList.add("disconnected");
-        }
+function stopKeepAlive() {
+    if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+        keepAliveInterval = null;
     }
 }
 
-/**
- * Display a new player on the screen
- */
+socket.on('pong', () => {
+    // Keep-alive response received
+    console.log('Display keep-alive pong received');
+});
+
+// ─── Socket Events ───
+socket.on("player-selected", (data) => {
+    displayNewPlayer(data.player, data.auctionState);
+    if (data.teams) updateTeamsDisplay(data.teams);
+});
+
+socket.on("bid-placed", (data) => {
+    animateBid(data.newBid, data.team);
+    if (data.teamsData) updateTeamsDisplay(data.teamsData);
+    highlightTeam(data.team._id);
+    spawnBidParticles();
+});
+
+socket.on("player-sold", (data) => {
+    showSoldOverlay(data.player, data.team, data.price);
+    launchCrackers();
+    setTimeout(() => {
+        hideSoldOverlay();
+        stopCrackers();
+        if (data.teamsData) updateTeamsDisplay(data.teamsData);
+        clearStage();
+        updateChip("displayRound", data.roundNumber || 0);
+        refreshSoldCount();
+    }, 5500);
+});
+
+socket.on("player-unsold", (data) => {
+    const player = data.player;
+    showUnsoldOverlay(player);
+    setTimeout(() => {
+        hideUnsoldOverlay();
+        clearStage();
+    }, 3500);
+});
+
+socket.on("auction-ended", () => {
+    clearStage();
+    refreshSoldCount();
+});
+
+// ─── Display Functions ───
 function displayNewPlayer(player, auctionState) {
     const section = document.getElementById("currentPlayerSection");
     if (!section) return;
 
-    const imageHtml = player.imageUrl
-        ? `
+    const imageSection = player.imageUrl ? `
         <div class="player-image-container">
-            <img src="${player.imageUrl}" alt="${player.name}" class="player-image" onerror="this.style.display='none'">
-        </div>
-    `
-        : "";
+            <img src="${player.imageUrl}" alt="${player.name}" class="player-image" onerror="this.style.display='none'" />
+        </div>` : '';
 
-    const playerTypeHtml = player.playerType
-        ? `
-        <div class="player-display-info">
-            <span class="player-type-badge">${player.playerType}</span>
-        </div>
-    `
-        : "";
+    const categoryBadge = player.category ? `
+        <div class="category-badge cat-${player.category}">CAT ${player.category}</div>` : '';
 
     section.innerHTML = `
-        <div class="player-display fade-in">
-            ${imageHtml}
+        <div class="player-display">
+            ${imageSection}
             <div class="player-display-left">
-                <div class="player-display-number">#${player.playerNumber}</div>
+                <div class="player-display-info">
+                    <span class="player-type-badge">${player.playerType}</span>
+                </div>
                 <h2 class="player-display-name">${player.name}</h2>
-                ${playerTypeHtml}
+                ${categoryBadge}
                 <div class="player-display-base">
-                    Base Price: ₹${player.basePrice.toLocaleString("en-IN")}
+                    Base Price: ₹${player.basePrice.toLocaleString('en-IN')}
                 </div>
             </div>
-            
             <div class="player-display-right">
                 <div class="current-bid-section">
                     <div class="bid-header">CURRENT BID</div>
                     <div class="bid-display-amount" id="displayBidAmount">
-                        ₹${(
-                            auctionState?.currentBid || player.basePrice
-                        ).toLocaleString("en-IN")}
+                        ₹${(auctionState.currentBid || player.basePrice).toLocaleString('en-IN')}
                     </div>
                     <div class="bid-display-team" id="displayBiddingTeam">
                         Waiting for bids...
                     </div>
                 </div>
             </div>
-        </div>
-    `;
-
-    // Remove any highlights from teams
-    document.querySelectorAll(".team-display-card").forEach((card) => {
-        card.classList.remove("bidding-highlight");
-    });
+        </div>`;
 }
 
-/**
- * Update bid amount display
- */
-function updateBidAmount(newBid, team) {
-    const bidAmountEl = document.getElementById("displayBidAmount");
-    const biddingTeamEl = document.getElementById("displayBiddingTeam");
-
-    if (bidAmountEl) {
-        bidAmountEl.classList.add("pulse-animation");
-        setTimeout(() => {
-            bidAmountEl.textContent = "₹" + newBid.toLocaleString("en-IN");
-            bidAmountEl.classList.remove("pulse-animation");
-        }, 250);
+function animateBid(amount, team) {
+    const amountEl = document.getElementById("displayBidAmount");
+    const teamEl = document.getElementById("displayBiddingTeam");
+    
+    if (amountEl) {
+        amountEl.textContent = "₹" + amount.toLocaleString("en-IN");
+        amountEl.classList.add("pulse-animation");
+        setTimeout(() => amountEl.classList.remove("pulse-animation"), 500);
     }
-
-    if (biddingTeamEl) {
-        const logoHtml = team.logo
-            ? `<img src="${team.logo}" alt="${team.teamName}" style="width: 45px; height: 45px; object-fit: contain; filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3)); margin-right: 10px; vertical-align: middle;">`
-            : "";
-        biddingTeamEl.innerHTML = logoHtml + team.teamName;
-        biddingTeamEl.style.color = team.color;
-        biddingTeamEl.style.textShadow = `0 0 20px ${team.color}`;
+    
+    if (teamEl && team) {
+        const logoSection = team.logo ? `<img src="${team.logo}" alt="${team.teamName}" style="width: 45px; height: 45px; object-fit: contain; filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3)); margin-right: 10px;">` : '';
+        teamEl.innerHTML = `${logoSection}${team.teamName}`;
+        teamEl.style.color = team.color;
+        teamEl.classList.add("fade-in");
+        setTimeout(() => teamEl.classList.remove("fade-in"), 500);
     }
 }
 
-/**
- * Update teams display grid
- */
 function updateTeamsDisplay(teams) {
-    if (!teams || !Array.isArray(teams)) return;
+    const grid = document.getElementById("teamsDisplayGrid");
+    if (!grid || !Array.isArray(teams)) return;
 
-    teams.forEach((team) => {
-        const card = document.querySelector(
-            `.team-display-card[data-team-id="${team._id}"]`
-        );
+    teams.forEach(team => {
+        const card = document.querySelector(`.team-card[data-team-id="${team._id}"]`);
         if (!card) return;
 
-        // Update players count
-        const playersEl = card.querySelector(".players-count");
-        if (playersEl) {
-            playersEl.textContent = `${team.playersCount}/11`;
-        }
+        const playersCountEl = card.querySelector(".players-count");
+        const purseValueEl = card.querySelector(".purse-value");
+        const progressFillEl = card.querySelector(".team-card__progress-fill");
+        const progressTextEl = card.querySelector(".team-card__progress-text");
 
-        // Update progress bar
-        const progressFill = card.querySelector(".progress-fill-display");
-        if (progressFill) {
-            progressFill.style.width = `${(team.playersCount / 11) * 100}%`;
+        if (playersCountEl) playersCountEl.textContent = `${team.playersCount}/9`;
+        if (purseValueEl) purseValueEl.textContent = `₹${team.remainingPurse.toLocaleString('en-IN')}`;
+        if (progressFillEl) {
+            progressFillEl.style.width = `${(team.playersCount / 9) * 100}%`;
         }
-
-        // Update purse
-        const purseEl = card.querySelector(".purse-value");
-        if (purseEl) {
-            purseEl.textContent =
-                "₹" + team.remainingPurse.toLocaleString("en-IN");
-        }
-
-        // Update spent
-        const spentEl = card.querySelector(".spent-value");
-        if (spentEl) {
-            const initialPurse = team.initialPurse || 100000;
-            const spent = initialPurse - team.remainingPurse;
-            spentEl.textContent = "₹" + spent.toLocaleString("en-IN");
-        }
+        if (progressTextEl) progressTextEl.textContent = `${team.playersCount}/9 Players`;
     });
 }
 
-/**
- * Highlight the bidding team
- */
-function highlightBiddingTeam(teamId) {
-    // Remove highlight from all cards
-    document.querySelectorAll(".team-display-card").forEach((card) => {
-        card.classList.remove("bidding-highlight");
-    });
-
-    // Add highlight to bidding team
-    const biddingCard = document.querySelector(
-        `.team-display-card[data-team-id="${teamId}"]`
-    );
-    if (biddingCard) {
-        biddingCard.classList.add("bidding-highlight");
+function setConnectionStatus(connected) {
+    const statusEl = document.getElementById("connectionStatus");
+    if (statusEl) {
+        statusEl.textContent = connected ? "🟢 Live" : "🔴 Offline";
+        statusEl.className = `header-stat connection-status ${connected ? "" : "disconnected"}`;
     }
 }
 
-/**
- * Show sold overlay
- */
+function updateChip(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (el) el.textContent = value;
+}
+
+function highlightTeam(teamId) {
+    document.querySelectorAll(".team-card").forEach(c => c.classList.remove("bidding-highlight"));
+    const card = document.querySelector(`.team-card[data-team-id="${teamId}"]`);
+    if (card) card.classList.add("bidding-highlight");
+}
+
+// ─── Overlays ───
+
+// ── SOLD OVERLAY ──
 function showSoldOverlay(player, team, price) {
     const overlay = document.getElementById("soldOverlay");
-    const playerNameEl = document.getElementById("soldPlayerName");
+    if (!overlay) return;
+
+    // Player photo
+    const photoWrap = document.getElementById("soldPlayerPhoto");
+    if (photoWrap) {
+        if (player.imageUrl) {
+            photoWrap.innerHTML = `<img src="${player.imageUrl}" alt="${player.name}" />`;
+            photoWrap.style.display = "block";
+        } else {
+            photoWrap.style.display = "none";
+        }
+    }
+
+    // Player name
+    setText("soldPlayerName", player.name);
+
+    // Team row
+    const logoEl = document.getElementById("soldTeamLogo");
     const teamNameEl = document.getElementById("soldTeamName");
-    const priceEl = document.getElementById("soldPrice");
-
-    if (playerNameEl) playerNameEl.textContent = player.name;
+    if (logoEl) {
+        if (team.logo) {
+            logoEl.src = team.logo;
+            logoEl.alt = team.teamName;
+            logoEl.style.display = "block";
+        } else {
+            logoEl.style.display = "none";
+        }
+    }
     if (teamNameEl) {
-        teamNameEl.textContent = `TO ${team.teamName.toUpperCase()}`;
-        teamNameEl.style.color = team.color;
-        teamNameEl.style.textShadow = `0 0 30px ${team.color}`;
+        teamNameEl.textContent = team.teamName.toUpperCase();
+        teamNameEl.style.color = team.color || "#22c55e";
+        teamNameEl.style.textShadow = `0 0 30px ${team.color || "#22c55e"}`;
     }
-    if (priceEl) priceEl.textContent = "₹" + price.toLocaleString("en-IN");
 
-    if (overlay) {
-        overlay.style.display = "flex";
-        setTimeout(() => {
-            overlay.classList.add("show-overlay");
-        }, 10);
-    }
+    // Price
+    setText("soldPrice", "₹" + price.toLocaleString("en-IN"));
+
+    overlay.style.display = "flex";
+    requestAnimationFrame(() => overlay.classList.add("show-overlay"));
 }
 
-/**
- * Hide sold overlay
- */
 function hideSoldOverlay() {
     const overlay = document.getElementById("soldOverlay");
-    if (overlay) {
-        overlay.classList.remove("show-overlay");
-        setTimeout(() => {
-            overlay.style.display = "none";
-        }, 500);
-    }
+    if (!overlay) return;
+    overlay.classList.remove("show-overlay");
+    setTimeout(() => { overlay.style.display = "none"; }, 500);
 }
 
-/**
- * Show unsold overlay
- */
+// ── UNSOLD OVERLAY ──
 function showUnsoldOverlay(player) {
     const overlay = document.getElementById("unsoldOverlay");
-    const playerNameEl = document.getElementById("unsoldPlayerName");
+    if (!overlay) return;
 
-    if (playerNameEl) playerNameEl.textContent = player.name;
-
-    if (overlay) {
-        overlay.style.display = "flex";
-        setTimeout(() => {
-            overlay.classList.add("show-overlay");
-        }, 10);
+    // Player photo
+    const photoWrap = document.getElementById("unsoldPlayerPhoto");
+    if (photoWrap) {
+        if (player.imageUrl) {
+            photoWrap.innerHTML = `<img src="${player.imageUrl}" alt="${player.name}" />`;
+            photoWrap.style.display = "block";
+        } else {
+            photoWrap.style.display = "none";
+        }
     }
+
+    setText("unsoldPlayerName", player.name);
+
+    // Subtitle for category change
+    const subtitleEl = document.getElementById("unsoldSubtitle");
+    if (subtitleEl) {
+        if (player.movedToC) {
+            subtitleEl.textContent = "Moved to Category C \u2022 Re-queued";
+            subtitleEl.style.display = "block";
+        } else {
+            subtitleEl.style.display = "none";
+        }
+    }
+
+    overlay.style.display = "flex";
+    requestAnimationFrame(() => overlay.classList.add("show-overlay"));
 }
 
-/**
- * Hide unsold overlay
- */
 function hideUnsoldOverlay() {
     const overlay = document.getElementById("unsoldOverlay");
-    if (overlay) {
-        overlay.classList.remove("show-overlay");
-        setTimeout(() => {
-            overlay.style.display = "none";
-        }, 500);
-    }
+    if (!overlay) return;
+    overlay.classList.remove("show-overlay");
+    setTimeout(() => {
+        overlay.style.display = "none";
+        const subtitleEl = document.getElementById("unsoldSubtitle");
+        if (subtitleEl) subtitleEl.style.display = "none";
+    }, 500);
 }
 
-/**
- * Clear player display
- */
-function clearPlayerDisplay() {
+function setText(id, txt) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+}
+
+function clearStage() {
     const section = document.getElementById("currentPlayerSection");
     if (section) {
         section.innerHTML = `
-            <div class="no-auction fade-in">
+            <div class="no-auction">
                 <div class="no-auction-content">
-                    <h2>NEXT PLAYER COMING SOON</h2>
-                    <p>Please wait...</p>
+                    <h2>BIDDING STARTING SOON</h2>
+                    <p>Please wait for the next player</p>
                 </div>
-            </div>
-        `;
+            </div>`;
     }
-
-    // Remove highlights
-    document.querySelectorAll(".team-display-card").forEach((card) => {
-        card.classList.remove("bidding-highlight");
-    });
+    document.querySelectorAll(".team-card").forEach(c => c.classList.remove("bidding-highlight"));
 }
 
-/**
- * Update round number
- */
-function updateRound(roundNumber) {
-    const roundEl = document.getElementById("displayRound");
-    if (roundEl) {
-        roundEl.textContent = roundNumber;
-    }
-}
-
-/**
- * Update sold count
- */
-async function updateSoldCount() {
+async function refreshSoldCount() {
     try {
-        const response = await fetch("/api/display-data");
-        const data = await response.json();
+        const res = await fetch("/api/display-data");
+        const data = await res.json();
+        if (data.soldCount !== undefined) updateChip("displaySold", data.soldCount);
+    } catch (e) { console.error("refreshSoldCount:", e); }
+}
 
-        const soldEl = document.getElementById("displaySold");
-        if (soldEl && data.soldCount !== undefined) {
-            soldEl.textContent = data.soldCount;
+// ═══════════════ VISUAL EFFECTS ═══════════════
+
+// ── Confetti / Crackers System ──
+let crackersAnimId = null;
+let crackersRunning = false;
+
+function launchCrackers() {
+    const canvas = document.getElementById("crackersCanvas");
+    if (!canvas) return;
+
+    canvas.style.display = "block";
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    crackersRunning = true;
+    const particles = [];
+    const colors = [
+        "#FFD700", "#FF6B6B", "#4ECDC4", "#45B7D1",
+        "#96CEB4", "#FFEAA7", "#DDA0DD", "#98D8C8",
+        "#FF9FF3", "#54A0FF", "#5F27CD", "#01A3A4",
+        "#F368E0", "#FF6348", "#7BED9F", "#70A1FF"
+    ];
+    const shapes = ["circle", "rect", "star", "ribbon"];
+
+    function createBurst(cx, cy, count) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 4 + Math.random() * 10;
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            particles.push({
+                x: cx, y: cy,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: shape === "ribbon" ? 8 + Math.random() * 10 : 3 + Math.random() * 5,
+                life: 1,
+                decay: 0.006 + Math.random() * 0.012,
+                shape: shape,
+                rotation: Math.random() * 360,
+                rotSpeed: (Math.random() - 0.5) * 12,
+                wobble: Math.random() * 10,
+                wobbleSpeed: 0.05 + Math.random() * 0.1
+            });
         }
-    } catch (error) {
-        console.error("Error updating sold count:", error);
     }
-}
 
-// ============= VISUAL EFFECTS =============
+    // Initial bursts from multiple points
+    const w = canvas.width, h = canvas.height;
+    createBurst(w * 0.2, h * 0.3, 80);
+    createBurst(w * 0.8, h * 0.3, 80);
+    createBurst(w * 0.5, h * 0.15, 100);
+    createBurst(w * 0.1, h * 0.5, 60);
+    createBurst(w * 0.9, h * 0.5, 60);
 
-/**
- * Create confetti effect when player is sold
- */
-function createConfetti() {
-    const colors = ["#fbbf24", "#10b981", "#3b82f6", "#f59e0b", "#8b5cf6"];
-    const confettiCount = 100;
+    // Continuous bursts
+    let burstTimer = 0;
+    const burstInterval = 40; // frames between new bursts
 
-    for (let i = 0; i < confettiCount; i++) {
-        const confetti = document.createElement("div");
-        confetti.style.position = "fixed";
-        confetti.style.width = "10px";
-        confetti.style.height = "10px";
-        confetti.style.backgroundColor =
-            colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.left = Math.random() * 100 + "%";
-        confetti.style.top = "-10px";
-        confetti.style.opacity = "1";
-        confetti.style.transform = "rotate(" + Math.random() * 360 + "deg)";
-        confetti.style.borderRadius = Math.random() > 0.5 ? "50%" : "0";
-        confetti.style.zIndex = "9999";
-        confetti.style.pointerEvents = "none";
+    function drawStar(ctx, cx, cy, size, rotation) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rotation * Math.PI / 180);
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const a = (i * 72 - 90) * Math.PI / 180;
+            const r = i === 0 ? size : size;
+            ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            const a2 = ((i * 72) + 36 - 90) * Math.PI / 180;
+            ctx.lineTo(Math.cos(a2) * (r * 0.4), Math.sin(a2) * (r * 0.4));
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
 
-        document.body.appendChild(confetti);
+    function animate() {
+        ctx.clearRect(0, 0, w, h);
 
-        const duration = 3000 + Math.random() * 2000;
-        const endLeft =
-            parseFloat(confetti.style.left) + (Math.random() - 0.5) * 100;
+        // Add new bursts periodically
+        burstTimer++;
+        if (crackersRunning && burstTimer % burstInterval === 0) {
+            const rx = Math.random() * w;
+            const ry = Math.random() * h * 0.4;
+            createBurst(rx, ry, 35 + Math.floor(Math.random() * 30));
+        }
 
-        confetti.animate(
-            [
-                {
-                    top: "-10px",
-                    left: confetti.style.left,
-                    opacity: 1,
-                    transform: "rotate(0deg)",
-                },
-                {
-                    top: "110vh",
-                    left: endLeft + "%",
-                    opacity: 0,
-                    transform: "rotate(" + (360 + Math.random() * 720) + "deg)",
-                },
-            ],
-            {
-                duration: duration,
-                easing: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+
+            p.x += p.vx;
+            p.vy += 0.12; // gravity
+            p.vx *= 0.99; // air resistance
+            p.y += p.vy;
+            p.rotation += p.rotSpeed;
+            p.wobble += p.wobbleSpeed;
+            p.x += Math.sin(p.wobble) * 0.5;
+            p.life -= p.decay;
+
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+                continue;
             }
-        );
 
-        setTimeout(() => {
-            confetti.remove();
-        }, duration);
-    }
-}
+            ctx.globalAlpha = Math.min(p.life, 1);
+            ctx.fillStyle = p.color;
 
-/**
- * Create particle effect when bid is placed
- */
-function createBidParticles() {
-    const bidSection = document.querySelector(".current-bid-section");
-    if (!bidSection) return;
-
-    const rect = bidSection.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    for (let i = 0; i < 15; i++) {
-        const particle = document.createElement("div");
-        particle.style.position = "fixed";
-        particle.style.width = "6px";
-        particle.style.height = "6px";
-        particle.style.backgroundColor = "#fbbf24";
-        particle.style.borderRadius = "50%";
-        particle.style.left = centerX + "px";
-        particle.style.top = centerY + "px";
-        particle.style.zIndex = "9999";
-        particle.style.pointerEvents = "none";
-        particle.style.boxShadow = "0 0 10px #fbbf24";
-
-        document.body.appendChild(particle);
-
-        const angle = (Math.PI * 2 * i) / 15;
-        const distance = 50 + Math.random() * 50;
-        const endX = centerX + Math.cos(angle) * distance;
-        const endY = centerY + Math.sin(angle) * distance;
-
-        particle.animate(
-            [
-                {
-                    left: centerX + "px",
-                    top: centerY + "px",
-                    opacity: 1,
-                    transform: "scale(1)",
-                },
-                {
-                    left: endX + "px",
-                    top: endY + "px",
-                    opacity: 0,
-                    transform: "scale(0)",
-                },
-            ],
-            {
-                duration: 800,
-                easing: "ease-out",
+            switch (p.shape) {
+                case "circle":
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case "rect":
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation * Math.PI / 180);
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                    ctx.restore();
+                    break;
+                case "star":
+                    drawStar(ctx, p.x, p.y, p.size, p.rotation);
+                    break;
+                case "ribbon":
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation * Math.PI / 180);
+                    ctx.fillRect(-p.size / 2, -1.5, p.size, 3);
+                    ctx.restore();
+                    break;
             }
-        );
+        }
 
-        setTimeout(() => {
-            particle.remove();
-        }, 800);
+        ctx.globalAlpha = 1;
+
+        if (particles.length > 0 || crackersRunning) {
+            crackersAnimId = requestAnimationFrame(animate);
+        } else {
+            canvas.style.display = "none";
+            crackersAnimId = null;
+        }
+    }
+
+    animate();
+}
+
+function stopCrackers() {
+    crackersRunning = false;
+    // Let remaining particles fade out naturally
+}
+
+function spawnBidParticles() {
+    const anchor = document.querySelector(".bid-display-amount");
+    if (!anchor) return;
+    const r = anchor.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (let i = 0; i < 18; i++) {
+        const p = document.createElement("div");
+        Object.assign(p.style, {
+            position: "fixed", width: "5px", height: "5px",
+            background: "#fbbf24", borderRadius: "50%",
+            left: cx + "px", top: cy + "px", zIndex: "99999", pointerEvents: "none",
+            boxShadow: "0 0 8px #fbbf24"
+        });
+        document.body.appendChild(p);
+        const angle = (Math.PI * 2 * i) / 18, dist = 40 + Math.random() * 60;
+        p.animate([
+            { left: cx + "px", top: cy + "px", opacity: 1, transform: "scale(1)" },
+            { left: (cx + Math.cos(angle) * dist) + "px", top: (cy + Math.sin(angle) * dist) + "px", opacity: 0, transform: "scale(0)" }
+        ], { duration: 700, easing: "ease-out" });
+        setTimeout(() => p.remove(), 700);
     }
 }
 
-// ============= AUTO-RECONNECT =============
+// ═══════════════ LIVE CLOCK ═══════════════
+function tickClock() {
+    const el = document.getElementById("liveClock");
+    if (!el) return;
+    const now = new Date();
+    el.textContent = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true }).toUpperCase();
+}
+tickClock();
+setInterval(tickClock, 1000);
 
-// Auto-refresh connection if disconnected
-setInterval(() => {
-    if (!socket.connected) {
-        console.log("Attempting to reconnect...");
-        socket.connect();
-    }
-}, 5000);
+// ═══════════════ AUTO-RECONNECT & POLLING FALLBACK ═══════════════
+setInterval(() => { if (!socket.connected) socket.connect(); }, 5000);
 
-// Polling fallback - refresh data every 30 seconds as backup
 setInterval(async () => {
-    if (!socket.connected) {
-        console.log("Using polling fallback...");
-        try {
-            const response = await fetch("/api/display-data");
-            const data = await response.json();
-
-            if (data.teams) {
-                updateTeamsDisplay(data.teams);
-            }
-
-            if (data.currentPlayer && data.auctionState?.isActive) {
-                displayNewPlayer(data.currentPlayer, data.auctionState);
-                if (data.currentBidder) {
-                    updateBidAmount(
-                        data.auctionState.currentBid,
-                        data.currentBidder
-                    );
-                }
-            }
-        } catch (error) {
-            console.error("Polling fallback error:", error);
+    if (socket.connected) return;
+    try {
+        const res = await fetch("/api/display-data");
+        const data = await res.json();
+        if (data.teams) updateTeamsDisplay(data.teams);
+        if (data.currentPlayer && data.auctionState?.isActive) {
+            displayNewPlayer(data.currentPlayer, data.auctionState);
+            if (data.currentBidder) animateBid(data.auctionState.currentBid, data.currentBidder);
         }
-    }
-}, 30000);
+    } catch (e) { console.error("Polling fallback:", e); }
+}, 15000);

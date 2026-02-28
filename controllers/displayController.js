@@ -36,7 +36,7 @@ export const showDisplay = async (req, res) => {
 				color: t.color,
 				logo: t.logo,
 				remainingPurse: t.remainingPurse,
-				initialPurse: t.initialPurse || 100000,
+				initialPurse: t.initialPurse || 1000000,
 				playersCount: t.playersCount,
 			})),
 			currentPlayer,

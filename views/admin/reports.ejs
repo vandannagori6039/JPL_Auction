@@ -117,8 +117,8 @@
                         <h3 style="color: <%= team.color %>; margin: 0;"><%= team.teamName %></h3>
                     </div>
                     <div class="team-report-stats">
-                        <p><strong>Players:</strong> <%= team.playersCount %>/11</p>
-                        <p><strong>Spent:</strong> ₹<%= (100000 - team.remainingPurse).toLocaleString('en-IN') %></p>
+                        <p><strong>Players:</strong> <%= team.playersCount %>/9</p>
+                        <p><strong>Spent:</strong> ₹<%= (team.initialPurse - team.remainingPurse).toLocaleString('en-IN') %></p>
                         <p><strong>Remaining:</strong> ₹<%= team.remainingPurse.toLocaleString('en-IN') %></p>
                     </div>
                     <div class="team-report-actions">

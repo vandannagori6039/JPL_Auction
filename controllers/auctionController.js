@@ -4,8 +4,11 @@ import AuctionState from '../models/AuctionState.js';
 import {
 	calculateMaxBid,
 	calculateMaxBidDirect,
+	calculateMaxBidWithContext,
 	canTeamBid,
 	getCategoryConfig,
+	getMinIncrement,
+	getUnsoldPoolCounts,
 } from '../utils/helpers.js';
 
 // ============= HELPER FUNCTIONS =============
@@ -41,13 +44,22 @@ const getRandomUnsoldPlayer = async (category = null) => {
 };
 
 /**
- * Get teams with max bid calculated for each
+ * Get teams with max bid calculated for each (reservation-aware).
+ * @param {string|null} excludePlayerId – player currently being auctioned (excluded from pool)
  */
-const getTeamsWithMaxBid = async () => {
+const getTeamsWithMaxBid = async (excludePlayerId = null) => {
 	const teams = await Team.find().sort('teamNumber').lean();
+	const unsoldCounts = await getUnsoldPoolCounts(excludePlayerId);
+
 	return teams.map((team) => ({
 		...team,
-		maxBidAllowed: calculateMaxBidDirect(team.remainingPurse, team.playersCount),
+		maxBidAllowed: calculateMaxBidWithContext(
+			team._id,
+			team.remainingPurse,
+			team.playersCount ?? 0,
+			unsoldCounts,
+			teams,
+		),
 	}));
 };
 
@@ -55,7 +67,7 @@ const getTeamsWithMaxBid = async () => {
  * Group players by category
  */
 const groupPlayersByCategory = (players) => {
-	const grouped = { A: 0, B: 0, C: 0, D: 0 };
+	const grouped = { A: 0, B: 0, C: 0 };
 	players.forEach((player) => {
 		if (grouped[player.category] !== undefined) {
 			grouped[player.category]++;
@@ -93,7 +105,7 @@ export const showAuctionControl = async (req, res) => {
 		let currentBidderInfo = null;
 
 		// Get unsold players
-		const unsoldPlayers = await Player.find({ status: 'unsold' }).sort('playerNumber');
+		const unsoldPlayers = await Player.find({ status: 'unsold' }).sort({ auctionOrder: 1, playerNumber: 1 });
 
 		// Group by category
 		const unsoldByCategory = groupPlayersByCategory(unsoldPlayers);
@@ -132,7 +144,7 @@ export const showAuctionControl = async (req, res) => {
 			teams: [],
 			currentPlayer: null,
 			unsoldPlayers: [],
-			unsoldByCategory: { A: 0, B: 0, C: 0, D: 0 },
+			unsoldByCategory: { A: 0, B: 0, C: 0 },
 			soldCount: 0,
 			unsoldCount: 0,
 			withdrawnCount: 0,
@@ -182,8 +194,8 @@ export const startAuctionForPlayer = async (playerId, isRandom = false) => {
 		auctionState.bidHistory = [];
 		await auctionState.save();
 
-		// Get teams data for response
-		const teams = await getTeamsWithMaxBid();
+		// Get teams data for response (exclude current player from pool)
+		const teams = await getTeamsWithMaxBid(player._id);
 
 		return {
 			success: true,
@@ -220,9 +232,8 @@ export const placeBid = async (teamId, customAmount = null) => {
 			return { success: false, message: 'Team not found' };
 		}
 
-		// Get category config for min increment
-		const categoryConfig = getCategoryConfig(player.category);
-		const minIncrement = categoryConfig ? categoryConfig.minIncrement : 500;
+		// Calculate tiered minimum increment based on category and current bid
+		const minIncrement = getMinIncrement(player.category, auctionState.currentBid);
 
 		// Calculate new bid amount
 		let newBidAmount;
@@ -231,12 +242,19 @@ export const placeBid = async (teamId, customAmount = null) => {
 			if (newBidAmount <= auctionState.currentBid) {
 				return { success: false, message: 'Custom bid must be higher than current bid' };
 			}
+			// Enforce minimum increment for custom bids
+			if (newBidAmount < auctionState.currentBid + minIncrement) {
+				return {
+					success: false,
+					message: `Minimum bid must be ₹${(auctionState.currentBid + minIncrement).toLocaleString('en-IN')}. Minimum increment for Category ${player.category} at this price is ₹${minIncrement.toLocaleString('en-IN')}.`,
+				};
+			}
 		} else {
 			newBidAmount = auctionState.currentBid + minIncrement;
 		}
 
-		// Validate team can afford this bid
-		const bidCheck = await canTeamBid(teamId, newBidAmount);
+		// Validate team can afford this bid (pool-aware purse protection)
+		const bidCheck = await canTeamBid(teamId, newBidAmount, auctionState.currentPlayer);
 		if (!bidCheck.canBid) {
 			return {
 				success: false,
@@ -260,8 +278,8 @@ export const placeBid = async (teamId, customAmount = null) => {
 
 		await auctionState.save();
 
-		// Get updated teams data
-		const teams = await getTeamsWithMaxBid();
+		// Get updated teams data (pool-aware, exclude current player)
+		const teams = await getTeamsWithMaxBid(auctionState.currentPlayer);
 
 		return {
 			success: true,
@@ -271,8 +289,11 @@ export const placeBid = async (teamId, customAmount = null) => {
 				teamName: team.teamName,
 				color: team.color,
 			},
-			minIncrement,
+			// Return next increment based on the new bid amount (for UI display)
+			minIncrement: getMinIncrement(player.category, newBidAmount),
 			teamsData: teams,
+			// Include current player base price for frontend cap checks
+			currentPlayerBasePrice: player.basePrice,
 		};
 	} catch (error) {
 		console.error('Error placing bid:', error);
@@ -336,8 +357,8 @@ export const markPlayerSold = async () => {
 		auctionState.bidHistory = [];
 		await auctionState.save();
 
-		// Get updated teams data
-		const teams = await getTeamsWithMaxBid();
+		// Get updated teams data (no current player now — auction cleared)
+		const teams = await getTeamsWithMaxBid(null);
 
 		return {
 			success: true,
@@ -364,7 +385,9 @@ export const markPlayerSold = async () => {
 };
 
 /**
- * Mark current player as unsold
+ * Mark current player as unsold.
+ * Moves the player to Category C (₹10,000 base) and re-queues them
+ * at the end of the auction list so they get another chance.
  */
 export const markPlayerUnsold = async () => {
 	try {
@@ -380,8 +403,24 @@ export const markPlayerUnsold = async () => {
 			return { success: false, message: 'Player not found' };
 		}
 
-		// Player is already 'unsold' - no need to update status
-		// Just clear the auction state
+		const originalCategory = player.category;
+
+		// Move unsold player to Category C and re-queue at the end
+		if (player.category !== 'C') {
+			player.category = 'C';
+			// basePrice is auto-set by pre-save hook when category changes
+		}
+		player.currentPrice = 10000; // Reset to C base price
+
+		// Increment auctionOrder so they appear last in the unsold list
+		// (playerNumber stays the same — it's the player's identity)
+		const maxOrder = await Player.findOne()
+			.sort({ auctionOrder: -1 })
+			.select('auctionOrder')
+			.lean();
+		player.auctionOrder = (maxOrder?.auctionOrder ?? 0) + 1;
+
+		await player.save();
 
 		// Clear auction state
 		auctionState.currentPlayer = null;
@@ -398,6 +437,9 @@ export const markPlayerUnsold = async () => {
 				_id: player._id,
 				name: player.name,
 				playerNumber: player.playerNumber,
+				originalCategory,
+				newCategory: 'C',
+				movedToC: originalCategory !== 'C',
 			},
 		};
 	} catch (error) {
@@ -485,8 +527,8 @@ export const undoLastSale = async () => {
 		lastSoldPlayer.soldPrice = 0;
 		await lastSoldPlayer.save();
 
-		// Get updated teams data
-		const teams = await getTeamsWithMaxBid();
+		// Get updated teams data (pool changed — player returned)
+		const teams = await getTeamsWithMaxBid(null);
 
 		return {
 			success: true,
@@ -562,12 +604,12 @@ export const getAuctionStats = async () => {
 export const getAllUnsoldPlayers = async (category = null) => {
 	try {
 		const query = { status: 'unsold' };
-		if (category && ['A', 'B', 'C', 'D'].includes(category)) {
+		if (category && ['A', 'B', 'C'].includes(category)) {
 			query.category = category;
 		}
 
 		const players = await Player.find(query)
-			.sort('playerNumber')
+			.sort({ auctionOrder: 1, playerNumber: 1 })
 			.select('_id name playerNumber category basePrice')
 			.lean();
 
